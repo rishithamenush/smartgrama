@@ -6,30 +6,13 @@ import 'data/bundle.dart';
 import 'data/database.dart';
 import 'security/key_store.dart';
 import 'security/pin_screen.dart';
+import 'theme.dart';
 import 'ui/home/home_shell.dart';
 import 'ui/setup/setup_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const SmartGramaApp());
-}
-
-ThemeData buildTheme() {
-  final scheme = ColorScheme.fromSeed(seedColor: const Color(0xFF1E6B3A));
-  return ThemeData(
-    colorScheme: scheme,
-    useMaterial3: true,
-    visualDensity: VisualDensity.standard,
-    inputDecorationTheme: const InputDecorationTheme(
-      border: OutlineInputBorder(),
-      isDense: false,
-    ),
-    cardTheme: const CardThemeData(margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6)),
-    appBarTheme: AppBarTheme(backgroundColor: scheme.primary, foregroundColor: scheme.onPrimary),
-    filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
-    ),
-  );
 }
 
 class SmartGramaApp extends StatelessWidget {

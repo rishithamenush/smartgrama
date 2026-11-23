@@ -11,6 +11,7 @@ import '../reports/reports_screen.dart';
 import '../settings/settings_screen.dart';
 import '../widgets/common.dart';
 import 'land_list_screen.dart';
+import '../../theme.dart';
 
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key, required this.onOpenTab});
@@ -85,6 +86,17 @@ class Dashboard extends StatelessWidget {
             ],
           ),
         ),
+        if (issues > 0)
+          Card(
+            color: Brand.warnBg,
+            child: ListTile(
+              leading: Icon(Icons.rule, color: Brand.warn),
+              title: Text('දත්ත පරීක්ෂා කිරීමට $issues ක් ඇත'),
+              subtitle: const Text('හැඳුනුම්පත්, GPS, ඡායාරූප, අනුපිටපත්…'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => push(context, const QualityScreen()),
+            ),
+          ),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(12),
@@ -120,7 +132,7 @@ class Dashboard extends StatelessWidget {
                               child: LinearProgressIndicator(
                                 value: p.fraction.clamp(0, 1),
                                 minHeight: 12,
-                                color: p.fraction >= 1 ? Colors.green : null,
+                                color: p.fraction >= 1 ? Brand.ok : null,
                               ),
                             ),
                           ),
@@ -147,17 +159,6 @@ class Dashboard extends StatelessWidget {
             ),
           ),
         ),
-        if (issues > 0)
-          Card(
-            color: Colors.orange.shade50,
-            child: ListTile(
-              leading: Icon(Icons.rule, color: Colors.orange.shade800),
-              title: Text('දත්ත පරීක්ෂා කිරීමට $issues ක් ඇත'),
-              subtitle: const Text('හැඳුනුම්පත්, GPS, ඡායාරූප, අනුපිටපත්…'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => push(context, const QualityScreen()),
-            ),
-          ),
       ],
     );
   }
