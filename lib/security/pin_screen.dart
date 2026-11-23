@@ -1,0 +1,189 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+
+import 'key_store.dart';
+
+/// PIN entry used both for first-time setup (enter twice) and unlocking.
+class PinScreen extends StatefulWidget {
+  const PinScreen.setup({super.key, required this.onDone})
+      : isSetup = true,
+        allowBiometric = false;
+  const PinScreen.unlock({super.key, required this.onDone, this.allowBiometric = true})
+      : isSetup = false;
+
+  final bool isSetup;
+  final bool allowBiometric;
+  final VoidCallback onDone;
+
+  @override
+  State<PinScreen> createState() => _PinScreenState();
+}
+
+class _PinScreenState extends State<PinScreen> {
+  static const _len = 6;
+  String _pin = '';
+  String? _first;
+  String? _error;
+  int _failures = 0;
+  DateTime? _blockedUntil;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.isSetup && widget.allowBiometric) _tryBiometric();
+  }
+
+  Future<void> _tryBiometric() async {
+    if (!await KeyStore.biometricEnabled()) return;
+    if (await KeyStore.authenticateBiometric()) widget.onDone();
+  }
+
+  String get _title {
+    if (!widget.isSetup) return 'PIN අංකය ඇතුළත් කරන්න';
+    return _first == null ? 'නව PIN අංකයක් (අංක 6) සාදන්න' : 'PIN අංකය නැවත ඇතුළත් කරන්න';
+  }
+
+  Future<void> _complete() async {
+    if (widget.isSetup) {
+      if (_first == null) {
+        setState(() {
+          _first = _pin;
+          _pin = '';
+          _error = null;
+        });
+        return;
+      }
+      if (_first != _pin) {
+        setState(() {
+          _first = null;
+          _pin = '';
+          _error = 'PIN අංක නොගැළපේ — නැවත උත්සාහ කරන්න';
+        });
+        return;
+      }
+      setState(() => _busy = true);
+      await KeyStore.setPin(_pin);
+      widget.onDone();
+      return;
+    }
+
+    setState(() => _busy = true);
+    final ok = await KeyStore.checkPin(_pin);
+    if (!mounted) return;
+    if (ok) {
+      widget.onDone();
+      return;
+    }
+    _failures++;
+    setState(() {
+      _busy = false;
+      _pin = '';
+      if (_failures >= 5) {
+        _blockedUntil = DateTime.now().add(const Duration(seconds: 30));
+        _error = 'වැරදි උත්සාහ 5 ක් — තත්පර 30 ක් රැඳී සිටින්න';
+        Timer(const Duration(seconds: 30), () {
+          if (mounted) setState(() => _error = null);
+        });
+        _failures = 0;
+      } else {
+        _error = 'වැරදි PIN අංකයකි';
+      }
+    });
+  }
+
+  void _press(String d) {
+    if (_busy) return;
+    if (_blockedUntil != null && DateTime.now().isBefore(_blockedUntil!)) return;
+    if (_pin.length >= _len) return;
+    setState(() {
+      _pin += d;
+      _error = null;
+    });
+    if (_pin.length == _len) _complete();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 32),
+            Icon(Icons.lock_outline, size: 48, color: cs.primary),
+            const SizedBox(height: 8),
+            Text('SmartGrama', style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 24),
+            Text(_title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (var i = 0; i < _len; i++)
+                  Container(
+                    margin: const EdgeInsets.all(8),
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: i < _pin.length ? cs.primary : null,
+                      border: Border.all(color: cs.primary, width: 2),
+                    ),
+                  ),
+              ],
+            ),
+            SizedBox(
+              height: 32,
+              child: _error == null
+                  ? null
+                  : Text(_error!, style: TextStyle(color: cs.error)),
+            ),
+            const Spacer(),
+            for (final row in const [
+              ['1', '2', '3'],
+              ['4', '5', '6'],
+              ['7', '8', '9'],
+            ])
+              _row(row.map((d) => _key(d, () => _press(d))).toList()),
+            _row([
+              widget.isSetup || !widget.allowBiometric
+                  ? const SizedBox(width: 88, height: 72)
+                  : _icon(Icons.fingerprint, _tryBiometric),
+              _key('0', () => _press('0')),
+              _icon(Icons.backspace_outlined, () {
+                if (_pin.isNotEmpty) setState(() => _pin = _pin.substring(0, _pin.length - 1));
+              }),
+            ]),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _row(List<Widget> children) =>
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: children);
+
+  Widget _key(String label, VoidCallback onTap) => Padding(
+        padding: const EdgeInsets.all(6),
+        child: SizedBox(
+          width: 76,
+          height: 60,
+          child: FilledButton.tonal(
+            onPressed: onTap,
+            child: Text(label, style: const TextStyle(fontSize: 26)),
+          ),
+        ),
+      );
+
+  Widget _icon(IconData icon, VoidCallback onTap) => Padding(
+        padding: const EdgeInsets.all(6),
+        child: SizedBox(
+          width: 76,
+          height: 60,
+          child: IconButton(onPressed: onTap, icon: Icon(icon, size: 28)),
+        ),
+      );
+}
