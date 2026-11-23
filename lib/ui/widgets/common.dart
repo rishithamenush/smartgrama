@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../theme.dart';
 
 final dateFmt = DateFormat('yyyy-MM-dd');
 final dateTimeFmt = DateFormat('yyyy-MM-dd HH:mm');
@@ -79,9 +80,9 @@ const statusLabels = {
 };
 
 Color statusColor(String status) => switch (status) {
-      'verified' => const Color(0xFF1B7F3B),
-      'complete' => const Color(0xFF2E7DBA),
-      _ => const Color(0xFFE0A100),
+      'verified' => Brand.ok,
+      'complete' => Brand.info,
+      _ => Brand.pending,
     };
 
 class StatusBadge extends StatelessWidget {

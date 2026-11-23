@@ -18,6 +18,7 @@ import '../forms/person_form.dart';
 import '../people/person_card.dart';
 import '../widgets/common.dart';
 import '../widgets/fields.dart';
+import '../../theme.dart';
 
 Future<T?> push<T>(BuildContext context, Widget page) =>
     Navigator.of(context).push<T>(MaterialPageRoute(builder: (_) => page));
@@ -131,7 +132,7 @@ class SummarySection extends StatelessWidget {
                 for (final i in check.items)
                   Row(children: [
                     Icon(i.ok ? Icons.check_circle : Icons.radio_button_unchecked,
-                        size: 18, color: i.ok ? Colors.green : cs.outline),
+                        size: 18, color: i.ok ? Brand.ok : cs.outline),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(i.ok || i.hint == null ? i.label : '${i.label} — ${i.hint}',
@@ -159,17 +160,17 @@ class SummarySection extends StatelessWidget {
             ];
             if (warnings.isEmpty) return const SizedBox.shrink();
             return Card(
-              color: Colors.orange.shade50,
+              color: Brand.warnBg,
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      Icon(Icons.warning_amber, color: Colors.orange.shade800),
+                      Icon(Icons.warning_amber, color: Brand.warn),
                       const SizedBox(width: 6),
                       Text('පරීක්ෂා කරන්න (${warnings.length})',
-                          style: TextStyle(color: Colors.orange.shade900, fontWeight: FontWeight.w600)),
+                          style: TextStyle(color: Brand.warn, fontWeight: FontWeight.w600)),
                     ]),
                     const SizedBox(height: 6),
                     for (final w in warnings)

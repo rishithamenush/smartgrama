@@ -10,7 +10,9 @@ import '../../data/units.dart';
 import '../land/land_card.dart';
 import '../land/land_sections.dart';
 import '../people/person_card.dart';
+import '../widgets/art.dart';
 import '../widgets/common.dart';
+import '../../theme.dart';
 
 /// Hub: statistics, ready-made lists, data quality and Excel export.
 class ReportsScreen extends StatelessWidget {
@@ -35,22 +37,24 @@ class ReportsScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('වාර්තා')),
       body: ListView(
         children: [
-          _tile(context, Icons.bar_chart, 'වසම් සංඛ්‍යාලේඛන',
+          const SizedBox(height: 8),
+          _tile(context, Icons.bar_chart_rounded, Brand.slate, 'වසම් සංඛ්‍යාලේඛන',
               'ජනගහනය, නිවාස, ඉඩම්, ගස්, සතුන්', () => push(context, const StatsScreen())),
-          _tile(context, Icons.list_alt, 'සූදානම් ලැයිස්තු',
+          _tile(context, Icons.list_alt_rounded, Brand.terracotta, 'සූදානම් ලැයිස්තු',
               'වැඩිහිටියන්, අබලන් නිවාස, කිරි ගවයින් ඇති පවුල්…', () => push(context, const ReadyListsScreen())),
-          _tile(context, Icons.rule, 'දත්ත ගුණාත්මකභාවය',
+          _tile(context, Icons.fact_check_rounded, Brand.gold, 'දත්ත ගුණාත්මකභාවය',
               'අසම්පූර්ණ, අනුපිටපත්, වලංගු නැති දත්ත', () => push(context, const QualityScreen())),
-          _tile(context, Icons.table_view, 'Excel ලෙස අපනයනය',
+          _tile(context, Icons.table_view_rounded, Brand.olive, 'Excel ලෙස අපනයනය',
               'සියලු දත්ත එක් ගොනුවකට', () => _export(context)),
         ],
       ),
     );
   }
 
-  Widget _tile(BuildContext context, IconData icon, String title, String sub, VoidCallback onTap) => Card(
+  Widget _tile(BuildContext context, IconData icon, Color color, String title, String sub, VoidCallback onTap) => Card(
         child: ListTile(
-          leading: CircleAvatar(child: Icon(icon)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          leading: IconBadge(icon, color),
           title: Text(title),
           subtitle: Text(sub),
           trailing: const Icon(Icons.chevron_right),
@@ -340,7 +344,7 @@ class QualityScreen extends StatelessWidget {
                 ListTile(
                   leading: Icon(
                     q.hits.isEmpty ? Icons.check_circle : Icons.warning_amber,
-                    color: q.hits.isEmpty ? Colors.green : Colors.orange.shade800,
+                    color: q.hits.isEmpty ? Brand.ok : Brand.warn,
                   ),
                   title: Text(q.title),
                   trailing: Text('${q.hits.length}', style: Theme.of(context).textTheme.titleMedium),

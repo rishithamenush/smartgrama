@@ -1,6 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../theme.dart';
+import '../ui/widgets/art.dart';
 
 import 'key_store.dart';
 
@@ -107,35 +111,53 @@ class _PinScreenState extends State<PinScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
+    final top = MediaQuery.of(context).padding.top;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        body: Column(
           children: [
-            const SizedBox(height: 32),
-            Icon(Icons.lock_outline, size: 48, color: cs.primary),
-            const SizedBox(height: 8),
-            Text('SmartGrama', style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 24),
-            Text(_title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 20),
+            BrandHeader(
+              height: top + 230,
+              radius: 36,
+              houseX: 0.14,
+              child: Padding(
+                padding: EdgeInsets.only(top: top + 28),
+                child: const Column(
+                  children: [
+                    AppLogo(size: 76),
+                    SizedBox(height: 12),
+                    Text('SmartGrama',
+                        style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800)),
+                    Text('ග්‍රාම නිලධාරී වසම් තොරතුරු',
+                        style: TextStyle(color: Brand.goldLight, fontSize: 13)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 22),
+            Text(_title,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Brand.brownDark)),
+            const SizedBox(height: 14),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 for (var i = 0; i < _len; i++)
-                  Container(
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
                     margin: const EdgeInsets.all(8),
                     width: 16,
                     height: 16,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: i < _pin.length ? cs.primary : null,
-                      border: Border.all(color: cs.primary, width: 2),
+                      color: i < _pin.length ? Brand.brown : Colors.white,
+                      border: Border.all(color: i < _pin.length ? Brand.brown : Brand.brownLight, width: 2),
                     ),
                   ),
               ],
             ),
             SizedBox(
-              height: 32,
+              height: 30,
               child: _error == null
                   ? null
                   : Text(_error!, style: TextStyle(color: cs.error)),
@@ -156,7 +178,7 @@ class _PinScreenState extends State<PinScreen> {
                 if (_pin.isNotEmpty) setState(() => _pin = _pin.substring(0, _pin.length - 1));
               }),
             ]),
-            const SizedBox(height: 24),
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
           ],
         ),
       ),
@@ -171,9 +193,15 @@ class _PinScreenState extends State<PinScreen> {
         child: SizedBox(
           width: 76,
           height: 60,
-          child: FilledButton.tonal(
+          child: OutlinedButton(
             onPressed: onTap,
-            child: Text(label, style: const TextStyle(fontSize: 26)),
+            style: OutlinedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Brand.brownDark,
+              side: const BorderSide(color: Brand.line),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            ),
+            child: Text(label, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w500)),
           ),
         ),
       );
@@ -183,7 +211,7 @@ class _PinScreenState extends State<PinScreen> {
         child: SizedBox(
           width: 76,
           height: 60,
-          child: IconButton(onPressed: onTap, icon: Icon(icon, size: 28)),
+          child: IconButton(onPressed: onTap, icon: Icon(icon, size: 28, color: Brand.brownMid)),
         ),
       );
 }

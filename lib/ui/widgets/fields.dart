@@ -8,6 +8,7 @@ import '../../data/database.dart';
 import '../../data/device.dart';
 import '../../data/picklists.dart';
 import 'common.dart';
+import '../../theme.dart';
 
 /// Single choice from a pick list. Short lists render as chips; long lists
 /// open a searchable sheet (with "add new" for editable lists).
@@ -367,7 +368,7 @@ class _GpsFieldState extends State<GpsField> {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            Icon(Icons.location_on, color: has ? (poor ? Colors.orange : cs.primary) : cs.outline),
+            Icon(Icons.location_on, color: has ? (poor ? Brand.pending : cs.primary) : cs.outline),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -381,7 +382,7 @@ class _GpsFieldState extends State<GpsField> {
                       poor
                           ? 'නිරවද්‍යතාව මී. ${acc.round()} — අඩුයි, නැවත ගන්න'
                           : 'නිරවද්‍යතාව මී. ${acc.round()}',
-                      style: TextStyle(fontSize: 12, color: poor ? Colors.orange.shade800 : cs.outline),
+                      style: TextStyle(fontSize: 12, color: poor ? Brand.warn : cs.outline),
                     ),
                 ],
               ),

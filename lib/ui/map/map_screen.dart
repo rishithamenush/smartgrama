@@ -10,6 +10,7 @@ import '../../data/picklists.dart';
 import '../land/land_card.dart';
 import '../land/land_sections.dart';
 import '../widgets/common.dart';
+import '../../theme.dart';
 
 enum _Layer { lands, houses, poorHouses, trees }
 
@@ -120,7 +121,7 @@ class _MapScreenState extends State<MapScreen> {
             final poor = b.condition == 'poor' || b.condition == 'unusable';
             if (_layers.contains(_Layer.houses) || (poor && _layers.contains(_Layer.poorHouses))) {
               final land = s.landById[b.landId];
-              markers.add(_pin(LatLng(b.lat!, b.lng!), poor ? Colors.red : Colors.blue, Icons.home,
+              markers.add(_pin(LatLng(b.lat!, b.lng!), poor ? Brand.terracotta : Brand.info, Icons.home,
                   land == null ? () {} : () => _showLand(s, land), size: 28));
             }
           }
@@ -134,7 +135,7 @@ class _MapScreenState extends State<MapScreen> {
                 child: GestureDetector(
                   onTap: land == null ? null : () => _showLand(s, land),
                   child: Column(children: [
-                    Icon(Icons.forest, color: t.isHazard ? Colors.red : Colors.green.shade800, size: 22),
+                    Icon(Icons.forest, color: t.isHazard ? Brand.terracotta : Brand.olive, size: 22),
                     Text(pl(PL.treeSingleSpecies, t.species),
                         style: const TextStyle(fontSize: 10, backgroundColor: Colors.white70)),
                   ]),
@@ -164,7 +165,7 @@ class _MapScreenState extends State<MapScreen> {
                         height: 24,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.blue,
+                            color: Brand.info,
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 3),
                           ),
