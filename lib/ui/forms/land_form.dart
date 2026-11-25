@@ -8,6 +8,7 @@ import '../../data/picklists.dart';
 import '../../data/units.dart';
 import '../widgets/common.dart';
 import '../widgets/fields.dart';
+import '../widgets/brand.dart';
 
 enum ExtentMode { arp, perches, hectares }
 
@@ -201,7 +202,7 @@ class _LandFormState extends State<LandForm> {
     final village = s?.villageById[group?.villageId];
     final extent = _extent;
     return Scaffold(
-      appBar: AppBar(title: Text(l == null ? 'නව ඉඩමක්' : 'ඉඩම සංස්කරණය')),
+      appBar: BrandAppBar(title: Text(l == null ? 'නව ඉඩමක්' : 'ඉඩම සංස්කරණය')),
       bottomNavigationBar: SaveBar(onSave: _save, busy: _busy || s == null),
       body: s == null
           ? const Center(child: CircularProgressIndicator())

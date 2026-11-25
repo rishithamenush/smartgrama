@@ -39,6 +39,12 @@ class Brand {
   );
 }
 
+const fontFamily = 'AbhayaLibre';
+
+/// Abhaya Libre's glyphs sit a little small next to Material's metrics, so
+/// all text is scaled by this on top of the user's text-size setting.
+const fontBoost = 1.1;
+
 ThemeData buildTheme() {
   const scheme = ColorScheme(
     brightness: Brightness.light,
@@ -76,6 +82,7 @@ ThemeData buildTheme() {
   return ThemeData(
     colorScheme: scheme,
     useMaterial3: true,
+    fontFamily: fontFamily,
     scaffoldBackgroundColor: Brand.cream,
     dividerTheme: const DividerThemeData(color: Brand.line, space: 1),
     appBarTheme: const AppBarTheme(
@@ -83,7 +90,7 @@ ThemeData buildTheme() {
       foregroundColor: Colors.white,
       centerTitle: true,
       elevation: 0,
-      titleTextStyle: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Colors.white),
+      titleTextStyle: TextStyle(fontFamily: fontFamily, fontSize: 21, fontWeight: FontWeight.w700, color: Colors.white),
     ),
     cardTheme: CardThemeData(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

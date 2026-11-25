@@ -6,6 +6,7 @@ import '../../data/bundle.dart';
 import '../../data/database.dart';
 import '../widgets/common.dart';
 import '../widgets/fields.dart';
+import '../widgets/brand.dart';
 
 /// Villages ("ගම්මාන") and house groups ("ගෘහ කණ්ඩායම්").
 class StructureScreen extends StatelessWidget {
@@ -22,7 +23,7 @@ class StructureScreen extends StatelessWidget {
       builder: (context, snap) {
         final s = snap.data;
         return Scaffold(
-          appBar: AppBar(title: const Text('ගම්මාන හා ගෘහ කණ්ඩායම්')),
+          appBar: BrandAppBar(title: const Text('ගම්මාන හා ගෘහ කණ්ඩායම්')),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => editVillage(context, null),
             icon: const Icon(Icons.add),

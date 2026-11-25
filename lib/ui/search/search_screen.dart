@@ -7,9 +7,11 @@ import '../../app_state.dart';
 import '../../data/database.dart';
 import '../../data/nic.dart';
 import '../../data/picklists.dart';
+import '../../theme.dart';
 import '../land/land_card.dart';
 import '../land/land_sections.dart';
 import '../people/person_card.dart';
+import '../widgets/brand.dart';
 import '../widgets/common.dart';
 
 class _Results {
@@ -18,6 +20,7 @@ class _Results {
   final List<Land> lands;
   final List<Building> buildings;
   bool get isEmpty => persons.isEmpty && lands.isEmpty && buildings.isEmpty;
+  int get total => persons.length + lands.length + buildings.length;
 }
 
 /// One box searches people (name, NIC, phone), lands (name, deed, address)
@@ -74,74 +77,84 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     final r = _r;
     final now = DateTime.now();
-    return Scaffold(
-      appBar: AppBar(title: const Text('සෙවීම')),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
-              controller: _ctrl,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search),
-                hintText: 'නම, හැඳුනුම්පත, ඉඩමේ නම, ඔප්පු අංකය, දුරකථනය',
-                suffixIcon: _ctrl.text.isEmpty
-                    ? null
-                    : IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _ctrl.clear();
-                          _search('');
-                        },
-                      ),
-              ),
-              onChanged: (v) {
-                _debounce?.cancel();
-                _debounce = Timer(const Duration(milliseconds: 250), () => _search(v));
-                setState(() {});
-              },
-            ),
+    return BrandPage(
+      title: 'සෙවීම',
+      subtitle: r == null ? 'පුද්ගලයින්, ඉඩම්, ගොඩනැගිලි' : 'ප්‍රතිඵල ${r.total}',
+      icon: Icons.search_rounded,
+      headerChild: TextField(
+        controller: _ctrl,
+        style: const TextStyle(fontSize: 17),
+        decoration: InputDecoration(
+          prefixIcon: const Icon(Icons.search_rounded, color: Brand.brownMid),
+          hintText: 'නම, හැඳුනුම්පත, ඉඩම, ඔප්පු අංකය…',
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
           ),
-          Expanded(
-            child: r == null
-                ? const EmptyHint('සෙවීමට ටයිප් කරන්න', icon: Icons.search)
-                : r.isEmpty
-                    ? const EmptyHint('කිසිවක් හමු නොවීය')
-                    : ListView(
-                        children: [
-                          if (r.persons.isNotEmpty) SectionTitle('පුද්ගලයින් (${r.persons.length})'),
-                          for (final p in r.persons)
-                            ListTile(
-                              leading: Icon(p.gender == 'f' ? Icons.woman : Icons.man),
-                              title: Text(p.fullName),
-                              subtitle: Text([
-                                if (p.nic != null) maskNic(p.nic),
-                                if (p.dob != null) 'වයස ${ageOn(p.dob!, now)}',
-                                if (p.status != 'resident') pl(PL.personStatus, p.status),
-                              ].join(' • ')),
-                              onTap: () => push(context, PersonCard(personId: p.id)),
-                            ),
-                          if (r.lands.isNotEmpty) SectionTitle('ඉඩම් (${r.lands.length})'),
-                          for (final l in r.lands)
-                            ListTile(
-                              leading: const Icon(Icons.landscape),
-                              title: Text(l.name),
-                              subtitle: Text([l.deedNo, l.addressText].whereType<String>().join(' • ')),
-                              trailing: StatusBadge(l.status),
-                              onTap: () => push(context, LandCard(landId: l.id)),
-                            ),
-                          if (r.buildings.isNotEmpty) SectionTitle('ගොඩනැගිලි (${r.buildings.length})'),
-                          for (final b in r.buildings)
-                            ListTile(
-                              leading: const Icon(Icons.home_work),
-                              title: Text(buildingLabel(b)),
-                              onTap: () => push(context, LandCard(landId: b.landId, initialTab: 1)),
-                            ),
-                        ],
-                      ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Brand.gold, width: 2),
           ),
-        ],
+          suffixIcon: _ctrl.text.isEmpty
+              ? null
+              : IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () {
+                    _ctrl.clear();
+                    _search('');
+                  },
+                ),
+        ),
+        onChanged: (v) {
+          _debounce?.cancel();
+          _debounce = Timer(const Duration(milliseconds: 250), () => _search(v));
+          setState(() {});
+        },
       ),
+      body: r == null
+          ? ListView(children: const [
+              EmptyHint('නම, හැඳුනුම්පත් අංකය, දුරකථන අංකය,\nඉඩමේ නම හෝ ඔප්පු අංකය ටයිප් කරන්න',
+                  icon: Icons.manage_search_rounded),
+            ])
+          : r.isEmpty
+              ? ListView(children: const [EmptyHint('කිසිවක් හමු නොවීය', icon: Icons.search_off_rounded)])
+              : ListView(
+                  padding: const EdgeInsets.only(bottom: 32),
+                  children: [
+                    if (r.persons.isNotEmpty) SectionTitle('පුද්ගලයින් (${r.persons.length})'),
+                    for (final p in r.persons)
+                      ListCard(
+                        icon: p.gender == 'f' ? Icons.woman_rounded : Icons.man_rounded,
+                        color: p.gender == 'f' ? Brand.terracotta : Brand.brownMid,
+                        title: p.fullName,
+                        subtitle: [
+                          if (p.nic != null) maskNic(p.nic),
+                          if (p.dob != null) 'වයස ${ageOn(p.dob!, now)}',
+                          if (p.status != 'resident') pl(PL.personStatus, p.status),
+                        ].join(' • '),
+                        onTap: () => push(context, PersonCard(personId: p.id)),
+                      ),
+                    if (r.lands.isNotEmpty) SectionTitle('ඉඩම් (${r.lands.length})'),
+                    for (final l in r.lands)
+                      ListCard(
+                        icon: Icons.landscape_rounded,
+                        color: Brand.olive,
+                        title: l.name,
+                        subtitle: [l.deedNo, l.addressText].whereType<String>().join(' • '),
+                        trailing: StatusBadge(l.status),
+                        onTap: () => push(context, LandCard(landId: l.id)),
+                      ),
+                    if (r.buildings.isNotEmpty) SectionTitle('ගොඩනැගිලි (${r.buildings.length})'),
+                    for (final b in r.buildings)
+                      ListCard(
+                        icon: Icons.home_work_rounded,
+                        color: Brand.gold,
+                        title: buildingLabel(b),
+                        onTap: () => push(context, LandCard(landId: b.landId, initialTab: 1)),
+                      ),
+                  ],
+                ),
     );
   }
 }

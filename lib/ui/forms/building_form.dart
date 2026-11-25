@@ -7,6 +7,7 @@ import '../../data/database.dart';
 import '../../data/picklists.dart';
 import '../widgets/common.dart';
 import '../widgets/fields.dart';
+import '../widgets/brand.dart';
 
 /// Suggests permanence from materials (officer can override).
 String? suggestPermanence(String? wall, String? roof, String? floor) {
@@ -123,7 +124,7 @@ class _BuildingFormState extends State<BuildingForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: BrandAppBar(
         title: Text(b == null ? 'නව ගොඩනැගිල්ලක්' : pl(PL.buildingType, b!.type)),
         actions: [
           if (b != null)

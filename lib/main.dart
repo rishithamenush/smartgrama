@@ -35,7 +35,7 @@ class SmartGramaApp extends StatelessWidget {
           behavior: HitTestBehavior.translucent,
           onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
           child: MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
+            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale * fontBoost)),
             child: child!,
           ),
         ),

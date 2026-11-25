@@ -9,6 +9,7 @@ import '../../data/device.dart';
 import '../../data/picklists.dart';
 import '../land/land_card.dart';
 import '../land/land_sections.dart';
+import '../widgets/brand.dart';
 import '../widgets/common.dart';
 import '../../theme.dart';
 
@@ -93,8 +94,18 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     final db = AppState.db;
-    return Scaffold(
-      appBar: AppBar(title: const Text('සිතියම')),
+    return BrandPage(
+      title: 'සිතියම',
+      subtitle: 'ඉඩම්, නිවාස හා වටිනා ගස් සිතියම මත',
+      icon: Icons.map_rounded,
+      headerChild: HeaderChips(items: [
+        for (final layer in _Layer.values)
+          (
+            _layerLabels[layer]!,
+            _layers.contains(layer),
+            () => setState(() => _layers.contains(layer) ? _layers.remove(layer) : _layers.add(layer)),
+          ),
+      ]),
       body: StreamBuilder<Snapshot>(
         stream: db.watchSnapshot(),
         builder: (context, snap) {
@@ -176,24 +187,6 @@ class _MapScreenState extends State<MapScreen> {
                     attributions: [TextSourceAttribution('© OpenStreetMap contributors')],
                   ),
                 ],
-              ),
-              Positioned(
-                top: 8,
-                left: 8,
-                right: 8,
-                child: Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    for (final layer in _Layer.values)
-                      FilterChip(
-                        label: Text(_layerLabels[layer]!),
-                        selected: _layers.contains(layer),
-                        onSelected: (on) =>
-                            setState(() => on ? _layers.add(layer) : _layers.remove(layer)),
-                      ),
-                  ],
-                ),
               ),
               if (located.isEmpty)
                 const Positioned(

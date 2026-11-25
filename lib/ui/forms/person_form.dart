@@ -8,6 +8,7 @@ import '../../data/nic.dart';
 import '../../data/picklists.dart';
 import '../widgets/common.dart';
 import '../widgets/fields.dart';
+import '../widgets/brand.dart';
 
 const _eventForStatus = {
   'moved': 'left',
@@ -230,7 +231,7 @@ class _PersonFormState extends State<PersonForm> {
     final age = _dob == null ? null : ageOn(_dob!, DateTime.now());
     final statusChanged = p != null && p!.status != _status;
     return Scaffold(
-      appBar: AppBar(
+      appBar: BrandAppBar(
         title: Text(p == null ? 'නව සාමාජිකයෙක්' : p!.fullName),
         actions: [
           if (p != null)

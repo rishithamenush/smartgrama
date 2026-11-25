@@ -37,15 +37,18 @@ class SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 18, 12, 6),
+        padding: const EdgeInsets.fromLTRB(16, 20, 12, 8),
         child: Row(
           children: [
+            Container(
+              width: 4,
+              height: 20,
+              decoration: BoxDecoration(color: Brand.gold, borderRadius: BorderRadius.circular(2)),
+            ),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(text,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(color: Theme.of(context).colorScheme.primary)),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Brand.brownDark)),
             ),
             ?trailing,
           ],
@@ -60,14 +63,23 @@ class EmptyHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(32, 40, 32, 24),
         child: Column(
           children: [
-            Icon(icon, size: 40, color: Theme.of(context).colorScheme.outline),
-            const SizedBox(height: 8),
+            Container(
+              width: 84,
+              height: 84,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Brand.goldLight,
+                border: Border.all(color: Brand.gold.withValues(alpha: 0.4), width: 2),
+              ),
+              child: Icon(icon, size: 40, color: Brand.brownMid),
+            ),
+            const SizedBox(height: 14),
             Text(text,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Theme.of(context).colorScheme.outline)),
+                style: const TextStyle(color: Brand.brownMid, fontSize: 15, height: 1.4)),
           ],
         ),
       );
@@ -91,10 +103,11 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
         decoration: BoxDecoration(
-          color: statusColor(status).withValues(alpha: 0.15),
+          color: statusColor(status).withValues(alpha: 0.13),
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: statusColor(status).withValues(alpha: 0.35)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -103,7 +116,7 @@ class StatusBadge extends StatelessWidget {
                 size: 12, color: statusColor(status)),
             const SizedBox(width: 4),
             Text(statusLabels[status] ?? status,
-                style: TextStyle(fontSize: 12, color: statusColor(status))),
+                style: TextStyle(fontSize: 13, color: statusColor(status), fontWeight: FontWeight.w700)),
           ],
         ),
       );
@@ -118,16 +131,20 @@ class InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (value == null || value!.isEmpty || value == '—') return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Brand.sand))),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 130,
-            child: Text(label, style: TextStyle(color: Theme.of(context).colorScheme.outline)),
+            width: 140,
+            child: Text(label, style: const TextStyle(color: Brand.muted, fontSize: 14)),
           ),
-          Expanded(child: Text(value!)),
+          Expanded(
+            child: Text(value!,
+                style: const TextStyle(color: Brand.brownDark, fontSize: 15, fontWeight: FontWeight.w600)),
+          ),
         ],
       ),
     );
@@ -136,35 +153,42 @@ class InfoRow extends StatelessWidget {
 
 /// Horizontal bar used on the statistics screen.
 class BarRow extends StatelessWidget {
-  const BarRow(this.label, this.value, this.max, {super.key, this.suffix = ''});
+  const BarRow(this.label, this.value, this.max, {super.key, this.suffix = '', this.color = Brand.gold});
   final String label;
   final num value;
   final num max;
   final String suffix;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
       child: Row(
         children: [
-          SizedBox(width: 130, child: Text(label, maxLines: 2, overflow: TextOverflow.ellipsis)),
+          SizedBox(
+            width: 128,
+            child: Text(label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Brand.brownDark, fontSize: 14)),
+          ),
           Expanded(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(
                 value: max == 0 ? 0 : value / max,
-                minHeight: 14,
-                backgroundColor: cs.surfaceContainerHighest,
+                minHeight: 12,
+                color: color,
+                backgroundColor: Brand.sand,
               ),
             ),
           ),
           SizedBox(
-            width: 70,
+            width: 64,
             child: Text('${NumberFormat.decimalPattern().format(value)}$suffix',
                 textAlign: TextAlign.right,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+                style: const TextStyle(fontWeight: FontWeight.w800, color: Brand.brownDark)),
           ),
         ],
       ),

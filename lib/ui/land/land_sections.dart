@@ -16,9 +16,10 @@ import '../forms/land_form.dart';
 import '../forms/nature_forms.dart';
 import '../forms/person_form.dart';
 import '../people/person_card.dart';
+import '../../theme.dart';
+import '../widgets/brand.dart';
 import '../widgets/common.dart';
 import '../widgets/fields.dart';
-import '../../theme.dart';
 
 Future<T?> push<T>(BuildContext context, Widget page) =>
     Navigator.of(context).push<T>(MaterialPageRoute(builder: (_) => page));
@@ -91,58 +92,89 @@ class SummarySection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = b.land;
     final check = checkLand(b);
-    final cs = Theme.of(context).colorScheme;
     final nics = b.persons.map((p) => p.nic).whereType<String>().toSet();
+    final done = check.items.where((i) => i.ok).length;
     return ListView(
-      padding: const EdgeInsets.only(bottom: 32),
+      padding: const EdgeInsets.only(bottom: 40),
       children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Wrap(
-              spacing: 16,
-              runSpacing: 8,
-              children: [
-                _count(Icons.home_work, 'ගොඩනැගිලි', b.buildings.length),
-                _count(Icons.family_restroom, 'පවුල්', b.families.length),
-                _count(Icons.person, 'පුද්ගලයින්', b.persons.where(isActive).length),
-                _count(Icons.park, 'ගස්', b.treeTotal),
-                _count(Icons.pets, 'සතුන්', b.animalTotal),
-                _count(Icons.photo, 'ඡායාරූප', b.photos.length),
-              ],
-            ),
-          ),
+        // ---- counts
+        SectionCard(
+          title: 'මෙම ඉඩමේ',
+          icon: Icons.dashboard_rounded,
+          children: [
+            const SizedBox(height: 4),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+              MiniStat(Icons.home_work_rounded, '${b.buildings.length}', 'ගොඩනැගිලි', Brand.gold),
+              MiniStat(Icons.family_restroom_rounded, '${b.families.length}', 'පවුල්', Brand.terracotta),
+              MiniStat(Icons.people_alt_rounded, '${b.persons.where(isActive).length}', 'පුද්ගලයින්', Brand.brown),
+            ]),
+            const SizedBox(height: 12),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+              MiniStat(Icons.park_rounded, '${b.treeTotal}', 'ගස්', Brand.ok),
+              MiniStat(Icons.pets_rounded, '${b.animalTotal}', 'සතුන්', Brand.slate),
+              MiniStat(Icons.photo_library_rounded, '${b.photos.length}', 'ඡායාරූප', Brand.olive),
+            ]),
+          ],
         ),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Expanded(
-                    child: Text('තොරතුරු ${check.percent}% සම්පූර්ණයි',
-                        style: Theme.of(context).textTheme.titleMedium),
+
+        // ---- completeness
+        SectionCard(
+          title: 'තොරතුරු සම්පූර්ණත්වය',
+          icon: Icons.task_alt_rounded,
+          color: Brand.olive,
+          trailing: StatusBadge(l.status),
+          children: [
+            Row(children: [
+              SizedBox(
+                width: 76,
+                height: 76,
+                child: Stack(fit: StackFit.expand, children: [
+                  CircularProgressIndicator(
+                    value: check.percent / 100,
+                    strokeWidth: 8,
+                    strokeCap: StrokeCap.round,
+                    color: check.percent == 100 ? Brand.ok : Brand.gold,
+                    backgroundColor: Brand.sand,
                   ),
-                  StatusBadge(l.status),
+                  Center(
+                    child: Text('${check.percent}%',
+                        style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: Brand.brownDark)),
+                  ),
                 ]),
-                const SizedBox(height: 8),
-                LinearProgressIndicator(value: check.percent / 100, minHeight: 8),
-                const SizedBox(height: 8),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  check.missing.isEmpty
+                      ? 'සියලු කොටස් සම්පූර්ණයි 🎉'
+                      : 'කොටස් $done / ${check.items.length} සම්පූර්ණයි.\nඉතිරි: ${check.missing.map((m) => m.label).join(', ')}',
+                  style: const TextStyle(color: Brand.brownMid, height: 1.35),
+                ),
+              ),
+            ]),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
                 for (final i in check.items)
-                  Row(children: [
-                    Icon(i.ok ? Icons.check_circle : Icons.radio_button_unchecked,
-                        size: 18, color: i.ok ? Brand.ok : cs.outline),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(i.ok || i.hint == null ? i.label : '${i.label} — ${i.hint}',
-                          style: TextStyle(color: i.ok ? null : cs.onSurfaceVariant)),
-                    ),
-                  ]),
+                  Tooltip(
+                    message: i.hint ?? i.label,
+                    child: Pill(i.label,
+                        color: i.ok ? Brand.ok : Brand.muted,
+                        icon: i.ok ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded),
+                  ),
               ],
             ),
-          ),
+            for (final i in check.missing.where((m) => m.hint != null))
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text('• ${i.hint}', style: const TextStyle(fontSize: 13, color: Brand.muted)),
+              ),
+          ],
         ),
+
+        // ---- warnings (incl. NIC duplicates elsewhere in the division)
         FutureBuilder<List<Person>>(
           future: nics.isEmpty
               ? Future.value(const [])
@@ -159,53 +191,65 @@ class SummarySection extends StatelessWidget {
               for (final d in dups) '${d.nic} — වෙනත් ස්ථානයක ${d.fullName} ලෙසද ඇත (අනුපිටපතක්ද?)',
             ];
             if (warnings.isEmpty) return const SizedBox.shrink();
-            return Card(
-              color: Brand.warnBg,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(children: [
-                      Icon(Icons.warning_amber, color: Brand.warn),
-                      const SizedBox(width: 6),
-                      Text('පරීක්ෂා කරන්න (${warnings.length})',
-                          style: TextStyle(color: Brand.warn, fontWeight: FontWeight.w600)),
-                    ]),
-                    const SizedBox(height: 6),
-                    for (final w in warnings)
-                      Padding(padding: const EdgeInsets.symmetric(vertical: 2), child: Text('• $w')),
-                  ],
-                ),
+            return Container(
+              margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Brand.warnBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Brand.warn.withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    const Icon(Icons.warning_amber_rounded, color: Brand.warn),
+                    const SizedBox(width: 6),
+                    Text('පරීක්ෂා කරන්න (${warnings.length})',
+                        style: const TextStyle(color: Brand.warn, fontWeight: FontWeight.w800, fontSize: 16)),
+                  ]),
+                  const SizedBox(height: 6),
+                  for (final w in warnings)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: Text('• $w', style: const TextStyle(color: Brand.brownDark)),
+                    ),
+                ],
               ),
             );
           },
         ),
+
+        // ---- status actions
         if (showActions)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            child: Row(
               children: [
                 if (l.status == 'draft')
-                  FilledButton.icon(
-                    onPressed: () async {
-                      if (check.missing.isNotEmpty &&
-                          !await confirm(context,
-                              'තවම සම්පූර්ණ නැති කොටස් ${check.missing.length} ක් ඇත. "සම්පූර්ණයි" ලෙස සලකුණු කරන්නද?')) {
-                        return;
-                      }
-                      if (context.mounted) await _setStatus(context, 'complete');
-                    },
-                    icon: const Icon(Icons.task_alt),
-                    label: const Text('සම්පූර්ණයි'),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () async {
+                        if (check.missing.isNotEmpty &&
+                            !await confirm(context,
+                                'තවම සම්පූර්ණ නැති කොටස් ${check.missing.length} ක් ඇත. "සම්පූර්ණයි" ලෙස සලකුණු කරන්නද?')) {
+                          return;
+                        }
+                        if (context.mounted) await _setStatus(context, 'complete');
+                      },
+                      icon: const Icon(Icons.task_alt_rounded),
+                      label: const Text('සම්පූර්ණයි'),
+                    ),
                   ),
+                if (l.status == 'draft') const SizedBox(width: 10),
                 if (l.status != 'verified')
-                  FilledButton.tonalIcon(
-                    onPressed: () => _setStatus(context, 'verified'),
-                    icon: const Icon(Icons.verified),
-                    label: const Text('තහවුරු කරන්න'),
+                  Expanded(
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(backgroundColor: Brand.ok),
+                      onPressed: () => _setStatus(context, 'verified'),
+                      icon: const Icon(Icons.verified_rounded),
+                      label: const Text('තහවුරු කරන්න'),
+                    ),
                   ),
                 if (l.status != 'draft')
                   TextButton(
@@ -215,49 +259,49 @@ class SummarySection extends StatelessWidget {
               ],
             ),
           ),
-        if (l.verifiedAt != null)
-          InfoRow('තහවුරු කළේ',
-              '${dateFmt.format(l.verifiedAt!)} — ${pl(PL.infoSource, l.infoSource)}'),
-        const SectionTitle('ඉඩමේ තොරතුරු'),
-        InfoRow('ප්‍රමාණය',
-            l.extentPerches == null ? null : '${formatExtent(l.extentPerches)} (${formatHectares(l.extentPerches)})'),
-        InfoRow('ප්‍රමාණයේ මූලාශ්‍රය', l.extentSource == null ? null : pl(PL.extentSource, l.extentSource)),
-        InfoRow('අයිතිය', l.ownershipType == null ? null : pl(PL.ownership, l.ownershipType)),
-        InfoRow('අයිතිකරුවන්', b.ownerNames.join(', ')),
-        InfoRow('ඔප්පු / බලපත්‍ර අංකය', l.deedNo),
-        InfoRow('පිඹුරු / කට්ටි අංකය', [l.planNo, l.lotNo].whereType<String>().join(' / ')),
-        InfoRow('ජනපදය', l.schemeName),
-        InfoRow('භාවිතය', l.landUse == null ? null : pl(PL.landUse, l.landUse)),
-        InfoRow('අතුරු බෙදීම්', l.subdivisionAllowed == null ? null : pl(PL.yesNoUnknown, l.subdivisionAllowed)),
-        InfoRow('ලිපිනය', l.addressText),
-        InfoRow('උතුර', l.boundaryNorth),
-        InfoRow('නැගෙනහිර', l.boundaryEast),
-        InfoRow('දකුණ', l.boundarySouth),
-        InfoRow('බටහිර', l.boundaryWest),
-        InfoRow('GPS', l.lat == null ? null : '${l.lat!.toStringAsFixed(6)}, ${l.lng!.toStringAsFixed(6)}'),
-        if (l.hasDispute) InfoRow('ආරවුල', l.disputeNote ?? 'ඇත'),
-        InfoRow('සටහන්', l.notes),
-        if (showActions)
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: OutlinedButton.icon(
-              onPressed: () => push(context, LandForm(land: l)),
-              icon: const Icon(Icons.edit),
-              label: const Text('ඉඩමේ තොරතුරු සංස්කරණය'),
-            ),
-          ),
+
+        // ---- details
+        SectionCard(
+          title: 'ඉඩමේ තොරතුරු',
+          icon: Icons.description_rounded,
+          color: Brand.brownMid,
+          padding: const EdgeInsets.fromLTRB(0, 12, 0, 6),
+          trailing: showActions
+              ? Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: TextButton.icon(
+                    onPressed: () => push(context, LandForm(land: l)),
+                    icon: const Icon(Icons.edit_rounded, size: 18),
+                    label: const Text('සංස්කරණය'),
+                  ),
+                )
+              : null,
+          children: [
+            InfoRow('ප්‍රමාණය',
+                l.extentPerches == null ? null : '${formatExtent(l.extentPerches)} (${formatHectares(l.extentPerches)})'),
+            InfoRow('ප්‍රමාණයේ මූලාශ්‍රය', l.extentSource == null ? null : pl(PL.extentSource, l.extentSource)),
+            InfoRow('අයිතිය', l.ownershipType == null ? null : pl(PL.ownership, l.ownershipType)),
+            InfoRow('අයිතිකරුවන්', b.ownerNames.join(', ')),
+            InfoRow('ඔප්පු / බලපත්‍ර අංකය', l.deedNo),
+            InfoRow('පිඹුරු / කට්ටි අංකය', [l.planNo, l.lotNo].whereType<String>().join(' / ')),
+            InfoRow('ජනපදය', l.schemeName),
+            InfoRow('භාවිතය', l.landUse == null ? null : pl(PL.landUse, l.landUse)),
+            InfoRow('අතුරු බෙදීම්', l.subdivisionAllowed == null ? null : pl(PL.yesNoUnknown, l.subdivisionAllowed)),
+            InfoRow('ලිපිනය', l.addressText),
+            InfoRow('උතුර', l.boundaryNorth),
+            InfoRow('නැගෙනහිර', l.boundaryEast),
+            InfoRow('දකුණ', l.boundarySouth),
+            InfoRow('බටහිර', l.boundaryWest),
+            InfoRow('GPS', l.lat == null ? null : '${l.lat!.toStringAsFixed(6)}, ${l.lng!.toStringAsFixed(6)}'),
+            if (l.hasDispute) InfoRow('ආරවුල', l.disputeNote ?? 'ඇත'),
+            InfoRow('සටහන්', l.notes),
+            if (l.verifiedAt != null)
+              InfoRow('තහවුරු කළේ', '${dateFmt.format(l.verifiedAt!)} — ${pl(PL.infoSource, l.infoSource)}'),
+          ],
+        ),
       ],
     );
   }
-
-  Widget _count(IconData i, String label, int n) => SizedBox(
-        width: 96,
-        child: Row(children: [
-          Icon(i, size: 20),
-          const SizedBox(width: 4),
-          Expanded(child: Text('$n $label', style: const TextStyle(fontSize: 13))),
-        ]),
-      );
 }
 
 // ===================================================================

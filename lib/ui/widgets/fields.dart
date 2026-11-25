@@ -519,13 +519,22 @@ class SaveBar extends StatelessWidget {
   final String label;
 
   @override
-  Widget build(BuildContext context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: FilledButton.icon(
-            onPressed: busy ? null : onSave,
-            icon: const Icon(Icons.save),
-            label: Text(label),
+  Widget build(BuildContext context) => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: const Border(top: BorderSide(color: Brand.line)),
+          boxShadow: [BoxShadow(color: Brand.brownDark.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, -4))],
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+            child: FilledButton.icon(
+              onPressed: busy ? null : onSave,
+              icon: busy
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.check_circle_rounded),
+              label: Text(label),
+            ),
           ),
         ),
       );

@@ -5,7 +5,9 @@ import '../../app_state.dart';
 import '../../data/analytics.dart';
 import '../../data/bundle.dart';
 import '../../data/database.dart';
+import '../../theme.dart';
 import '../forms/land_form.dart';
+import '../widgets/brand.dart';
 import 'land_sections.dart';
 
 const wizardSteps = ['ඉඩම', 'ගොඩනැගිලි', 'මිනිසුන්', 'ගස් හා බෝග', 'සතුන්', 'සමාලෝචනය'];
@@ -49,44 +51,33 @@ class _LandWizardState extends State<LandWizard> {
       builder: (context, snap) {
         final b = snap.data;
         final last = _step == wizardSteps.length - 1;
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(b?.land.name ?? ''),
-            actions: [
-              if (_step == 0 && b != null)
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () => push(context, LandForm(land: b.land)),
-                ),
-            ],
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(56),
-              child: SizedBox(
-                height: 56,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  children: [
-                    for (var i = 0; i < wizardSteps.length; i++)
-                      Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: ChoiceChip(
-                          avatar: CircleAvatar(
-                            radius: 10,
-                            child: Text('${i + 1}', style: const TextStyle(fontSize: 11)),
-                          ),
-                          label: Text(wizardSteps[i]),
-                          selected: _step == i,
-                          onSelected: (_) => setState(() => _step = i),
-                        ),
-                      ),
-                  ],
+        return BrandPage(
+          title: b?.land.name ?? '',
+          subtitle: 'පියවර ${_step + 1} / ${wizardSteps.length} — ${wizardSteps[_step]}',
+          actions: [
+            if (_step == 0 && b != null)
+              HeaderAction(Icons.edit_rounded, () => push(context, LandForm(land: b.land))),
+          ],
+          headerChild: Column(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: (_step + 1) / wizardSteps.length,
+                  minHeight: 6,
+                  color: Brand.gold,
+                  backgroundColor: Colors.white.withValues(alpha: 0.18),
                 ),
               ),
-            ),
+              const SizedBox(height: 10),
+              HeaderChips(items: [
+                for (var i = 0; i < wizardSteps.length; i++)
+                  ('${i + 1}. ${wizardSteps[i]}', _step == i, () => setState(() => _step = i)),
+              ]),
+            ],
           ),
           body: b == null ? const Center(child: CircularProgressIndicator()) : _body(b),
-          bottomNavigationBar: SafeArea(
+          bottomBar: SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
               child: Row(

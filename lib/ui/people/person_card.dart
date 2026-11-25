@@ -6,8 +6,10 @@ import '../../data/bundle.dart';
 import '../../data/database.dart';
 import '../../data/nic.dart';
 import '../../data/picklists.dart';
+import '../../theme.dart';
 import '../forms/person_form.dart';
 import '../land/land_card.dart';
+import '../widgets/brand.dart';
 import '../widgets/common.dart';
 
 class _PersonView {
@@ -58,6 +60,8 @@ class _PersonCardState extends State<PersonCard> {
     return _PersonView(p, f, b, l, events..sort((a, b) => b.date.compareTo(a.date)), linked, members);
   }
 
+  void _open(Widget page) => Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<_PersonView?>(
@@ -65,8 +69,8 @@ class _PersonCardState extends State<PersonCard> {
       builder: (context, snap) {
         final v = snap.data;
         if (v == null) {
-          return Scaffold(
-            appBar: AppBar(),
+          return BrandPage(
+            title: 'පුද්ගලයා',
             body: snap.connectionState == ConnectionState.waiting
                 ? const Center(child: CircularProgressIndicator())
                 : const EmptyHint('හමු නොවීය'),
@@ -74,79 +78,107 @@ class _PersonCardState extends State<PersonCard> {
         }
         final p = v.p;
         final now = DateTime.now();
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(p.fullName),
-            actions: [
-              if (v.land != null)
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => PersonForm(familyId: p.familyId, landId: v.land!.id, person: p))),
+        final age = p.dob == null ? null : ageOn(p.dob!, now);
+        final female = p.gender == 'f';
+        return BrandPage(
+          title: p.fullName,
+          subtitle: [
+            if (p.relation != null) pl(PL.relation, p.relation),
+            if (v.land != null) v.land!.name,
+          ].join('  •  '),
+          actions: [
+            if (v.land != null)
+              HeaderAction(Icons.edit_rounded,
+                  () => _open(PersonForm(familyId: p.familyId, landId: v.land!.id, person: p))),
+          ],
+          headerChild: Row(
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: female ? Brand.terracotta : Brand.gold,
+                  border: Border.all(color: Colors.white, width: 2),
                 ),
+                child: Icon(female ? Icons.woman_rounded : Icons.man_rounded, color: Colors.white, size: 36),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Wrap(spacing: 6, runSpacing: 6, children: [
+                  if (age != null) _whitePill('වයස $age'),
+                  if (p.gender != null) _whitePill(pl(PL.gender, p.gender)),
+                  _whitePill(pl(PL.personStatus, p.status)),
+                ]),
+              ),
             ],
           ),
           body: ListView(
-            padding: const EdgeInsets.only(bottom: 32),
+            padding: const EdgeInsets.only(bottom: 40),
             children: [
-              Card(
-                child: ListTile(
-                  leading: CircleAvatar(child: Icon(p.gender == 'f' ? Icons.woman : Icons.man)),
-                  title: Text(p.fullName, style: Theme.of(context).textTheme.titleMedium),
-                  subtitle: Text([
-                    if (p.initialsName != null) p.initialsName!,
-                    if (p.dob != null) 'වයස ${ageOn(p.dob!, now)}',
-                    pl(PL.personStatus, p.status),
-                  ].join(' • ')),
-                ),
-              ),
               if (p.nic != null)
-                ListTile(
-                  leading: const Icon(Icons.badge),
-                  title: Text(_showNic ? p.nic! : maskNic(p.nic)),
-                  subtitle: Text(parseNic(p.nic!).isValid ? 'ජාතික හැඳුනුම්පත' : '⚠ වලංගු නැති අංකයකි'),
+                ListCard(
+                  margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                  icon: Icons.badge_rounded,
+                  color: Brand.slate,
+                  title: _showNic ? p.nic! : maskNic(p.nic),
+                  subtitle: parseNic(p.nic!).isValid ? 'ජාතික හැඳුනුම්පත' : '⚠ වලංගු නැති අංකයකි',
                   trailing: IconButton(
-                    icon: Icon(_showNic ? Icons.visibility_off : Icons.visibility),
+                    icon: Icon(_showNic ? Icons.visibility_off_rounded : Icons.visibility_rounded, color: Brand.muted),
                     onPressed: () => setState(() => _showNic = !_showNic),
                   ),
                 ),
-              InfoRow('උපන් දිනය', p.dob == null ? null : dateFmt.format(p.dob!)),
-              InfoRow('ස්ත්‍රී / පුරුෂ', p.gender == null ? null : pl(PL.gender, p.gender)),
-              InfoRow('සම්බන්ධතාව', p.relation == null ? null : pl(PL.relation, p.relation)),
-              InfoRow('ජාතිය', p.ethnicity == null ? null : pl(PL.ethnicity, p.ethnicity)),
-              InfoRow('ආගම', p.religion == null ? null : pl(PL.religion, p.religion)),
-              InfoRow('විවාහක තත්ත්වය', p.civilStatus == null ? null : pl(PL.civilStatus, p.civilStatus)),
-              InfoRow('අධ්‍යාපනය', p.education == null ? null : pl(PL.education, p.education)),
-              InfoRow('ශ්‍රේණිය', p.schoolGrade),
-              InfoRow('රැකියාව', p.occupation == null ? null : pl(PL.occupation, p.occupation)),
-              InfoRow('රැකියා ස්ථානය', p.workplace),
-              InfoRow('ආබාධ', p.disability == null ? null : pl(PL.disability, p.disability)),
-              InfoRow('රෝග', p.chronicIllness),
-              InfoRow('ඡන්ද හිමි', p.isVoter == null ? null : pl(PL.yesNoUnknown, p.isVoter)),
-              InfoRow('දුරකථනය', p.phone),
-              InfoRow('සටහන්', p.notes),
+              SectionCard(
+                title: 'පුද්ගලික තොරතුරු',
+                icon: Icons.person_rounded,
+                padding: const EdgeInsets.fromLTRB(0, 12, 0, 6),
+                children: [
+                  InfoRow('සම්පූර්ණ නම', p.fullName),
+                  InfoRow('මුලකුරු සහිත නම', p.initialsName),
+                  InfoRow('උපන් දිනය', p.dob == null ? null : dateFmt.format(p.dob!)),
+                  InfoRow('ජාතිය', p.ethnicity == null ? null : pl(PL.ethnicity, p.ethnicity)),
+                  InfoRow('ආගම', p.religion == null ? null : pl(PL.religion, p.religion)),
+                  InfoRow('විවාහක තත්ත්වය', p.civilStatus == null ? null : pl(PL.civilStatus, p.civilStatus)),
+                  InfoRow('ඡන්ද හිමි', p.isVoter == null ? null : pl(PL.yesNoUnknown, p.isVoter)),
+                  InfoRow('දුරකථනය', p.phone),
+                ],
+              ),
+              SectionCard(
+                title: 'අධ්‍යාපනය හා රැකියාව',
+                icon: Icons.school_rounded,
+                color: Brand.slate,
+                padding: const EdgeInsets.fromLTRB(0, 12, 0, 6),
+                children: [
+                  InfoRow('අධ්‍යාපනය', p.education == null ? null : pl(PL.education, p.education)),
+                  InfoRow('ශ්‍රේණිය', p.schoolGrade),
+                  InfoRow('රැකියාව', p.occupation == null ? null : pl(PL.occupation, p.occupation)),
+                  InfoRow('රැකියා ස්ථානය', p.workplace),
+                  InfoRow('ආබාධ', p.disability == null ? null : pl(PL.disability, p.disability)),
+                  InfoRow('රෝග', p.chronicIllness),
+                  InfoRow('සටහන්', p.notes),
+                ],
+              ),
               if (v.land != null) ...[
                 const SectionTitle('ජීවත් වන ස්ථානය'),
-                ListTile(
-                  leading: const Icon(Icons.home),
-                  title: Text(v.land!.name),
-                  subtitle: Text(v.building == null ? '' : pl(PL.buildingType, v.building!.type)),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (_) => LandCard(landId: v.land!.id, initialTab: 2))),
+                ListCard(
+                  icon: Icons.home_rounded,
+                  color: Brand.gold,
+                  title: v.land!.name,
+                  subtitle: v.building == null ? null : pl(PL.buildingType, v.building!.type),
+                  onTap: () => _open(LandCard(landId: v.land!.id, initialTab: 2)),
                 ),
               ],
               if (v.members.isNotEmpty) ...[
                 const SectionTitle('පවුලේ අනෙක් අය'),
                 for (final m in v.members)
-                  ListTile(
-                    dense: true,
-                    leading: const Icon(Icons.person_outline),
-                    title: Text(m.fullName),
-                    subtitle: Text([
+                  ListCard(
+                    icon: m.gender == 'f' ? Icons.woman_rounded : Icons.man_rounded,
+                    color: m.gender == 'f' ? Brand.terracotta : Brand.brownMid,
+                    title: m.fullName,
+                    subtitle: [
                       pl(PL.relation, m.relation),
                       if (m.dob != null) 'වයස ${ageOn(m.dob!, now)}',
-                    ].join(' • ')),
+                    ].join(' • '),
                     onTap: () => Navigator.of(context)
                         .pushReplacement(MaterialPageRoute(builder: (_) => PersonCard(personId: m.id))),
                   ),
@@ -154,23 +186,22 @@ class _PersonCardState extends State<PersonCard> {
               if (v.linkedLands.isNotEmpty) ...[
                 const SectionTitle('සම්බන්ධ ඉඩම්'),
                 for (final (party, land) in v.linkedLands)
-                  ListTile(
-                    leading: const Icon(Icons.landscape),
-                    title: Text(land.name),
-                    subtitle: Text([pl(PL.partyRole, party.role), if (party.share != null) 'කොටස ${party.share}'].join(' • ')),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context)
-                        .push(MaterialPageRoute(builder: (_) => LandCard(landId: land.id))),
+                  ListCard(
+                    icon: Icons.landscape_rounded,
+                    color: Brand.olive,
+                    title: land.name,
+                    subtitle: [pl(PL.partyRole, party.role), if (party.share != null) 'කොටස ${party.share}'].join(' • '),
+                    onTap: () => _open(LandCard(landId: land.id)),
                   ),
               ],
               if (v.events.isNotEmpty) ...[
                 const SectionTitle('පදිංචි ඉතිහාසය'),
                 for (final e in v.events)
-                  ListTile(
-                    dense: true,
-                    leading: const Icon(Icons.history),
-                    title: Text(residenceEventLabels[e.type] ?? e.type),
-                    subtitle: Text([dateFmt.format(e.date), if (e.note != null) e.note!].join(' • ')),
+                  ListCard(
+                    icon: Icons.history_rounded,
+                    color: Brand.clay,
+                    title: residenceEventLabels[e.type] ?? e.type,
+                    subtitle: [dateFmt.format(e.date), if (e.note != null) e.note!].join(' • '),
                   ),
               ],
             ],
@@ -179,4 +210,10 @@ class _PersonCardState extends State<PersonCard> {
       },
     );
   }
+
+  Widget _whitePill(String t) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(14)),
+        child: Text(t, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+      );
 }

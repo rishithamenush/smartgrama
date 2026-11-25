@@ -7,6 +7,7 @@ import '../../data/database.dart';
 import '../../data/picklists.dart';
 import '../widgets/common.dart';
 import '../widgets/fields.dart';
+import '../widgets/brand.dart';
 
 class FamilyForm extends StatefulWidget {
   const FamilyForm({super.key, required this.landId, required this.buildings, this.family});
@@ -70,7 +71,7 @@ class _FamilyFormState extends State<FamilyForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: BrandAppBar(
         title: Text(f == null ? 'නව පවුලක්' : 'පවුලේ තොරතුරු'),
         actions: [
           if (f != null)

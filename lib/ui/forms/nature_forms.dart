@@ -6,6 +6,7 @@ import '../../data/database.dart';
 import '../../data/picklists.dart';
 import '../widgets/common.dart';
 import '../widgets/fields.dart';
+import '../widgets/brand.dart';
 
 // ===================================================================
 // Counted trees: one screen with ➕➖ for every species
@@ -77,7 +78,7 @@ class _TreeCountsScreenState extends State<TreeCountsScreen> {
     final missingQuick = _quickSpecies.where((c) => !_rows.any((r) => r.species == c));
     final total = _rows.fold<int>(0, (s, r) => s + r.bearing + r.young);
     return Scaffold(
-      appBar: AppBar(title: Text('ගස් ගණන් කිරීම ($total)')),
+      appBar: BrandAppBar(title: Text('ගස් ගණන් කිරීම ($total)')),
       bottomNavigationBar: SaveBar(onSave: _save, busy: _busy),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 32),
@@ -192,7 +193,7 @@ class _SingleTreeFormState extends State<SingleTreeForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: BrandAppBar(
         title: Text(t == null ? 'තනි ගසක්' : pl(PL.treeSingleSpecies, t!.species)),
         actions: [
           if (t != null)
@@ -305,7 +306,7 @@ class _CropFormState extends State<CropForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: BrandAppBar(
         title: Text(c == null ? 'නව බෝගයක්' : pl(PL.crop, c!.crop)),
         actions: [
           if (c != null)
@@ -413,7 +414,7 @@ class _AnimalFormState extends State<AnimalForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: BrandAppBar(
         title: Text(a == null ? 'සතුන් එකතු කරන්න' : pl(PL.animal, a!.species)),
         actions: [
           if (a != null)

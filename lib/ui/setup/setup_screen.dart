@@ -7,6 +7,7 @@ import '../../data/database.dart';
 import '../widgets/common.dart';
 import '../widgets/fields.dart';
 import 'structure_screen.dart';
+import '../widgets/brand.dart';
 
 /// Division details. Used on first run (then continues to villages) and
 /// from settings.
@@ -67,7 +68,7 @@ class _SetupScreenState extends State<SetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('වසම් තොරතුරු')),
+      appBar: BrandAppBar(title: const Text('වසම් තොරතුරු')),
       bottomNavigationBar: SaveBar(
         onSave: _save,
         busy: _busy,
