@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../theme.dart';
+import '../../l10n/l10n.dart';
 
 /// Decorative Sri Lankan village scene (sun, hills, paddy terraces, coconut
 /// palms and a house) painted in brand tones over the brown header.
@@ -184,17 +185,9 @@ class IconBadge extends StatelessWidget {
       );
 }
 
-const _siMonths = [
-  'ජනවාරි', 'පෙබරවාරි', 'මාර්තු', 'අප්‍රේල්', 'මැයි', 'ජූනි',
-  'ජූලි', 'අගෝස්තු', 'සැප්තැම්බර්', 'ඔක්තෝබර්', 'නොවැම්බර්', 'දෙසැම්බර්',
-];
-const _siDays = ['සඳුදා', 'අඟහරුවාදා', 'බදාදා', 'බ්‍රහස්පතින්දා', 'සිකුරාදා', 'සෙනසුරාදා', 'ඉරිදා'];
-
-/// "2026 නොවැම්බර් 23, සඳුදා"
-String sinhalaDate(DateTime d) => '${d.year} ${_siMonths[d.month - 1]} ${d.day}, ${_siDays[d.weekday - 1]}';
-
-String timeGreeting(DateTime d) => d.hour < 12
-    ? 'සුභ උදෑසනක්'
+/// Greeting for the time of day in the current language.
+String timeGreeting(AppLocalizations t, DateTime d) => d.hour < 12
+    ? t.greetingMorning
     : d.hour < 16
-        ? 'සුභ දහවලක්'
-        : 'සුභ සන්ධ්‍යාවක්';
+        ? t.greetingAfternoon
+        : t.greetingEvening;

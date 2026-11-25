@@ -1,0 +1,5 @@
+/* iOS permission prompts — Tamil */
+"NSLocationWhenInUseUsageDescription" = "காணிகள், கட்டடங்கள், மரங்களின் இருப்பிடத்தைப் பதிவுசெய்ய GPS பயன்படுத்தப்படுகிறது.";
+"NSCameraUsageDescription" = "வீடுகள், காணிகள், மரங்களின் புகைப்படங்களை எடுக்கக் கமரா பயன்படுத்தப்படுகிறது.";
+"NSPhotoLibraryUsageDescription" = "ஏற்கனவே உள்ள புகைப்படங்களைத் தேர்ந்தெடுக்க.";
+"NSFaceIDUsageDescription" = "SmartGrama-வைப் பாதுகாப்பாகத் திறக்க.";

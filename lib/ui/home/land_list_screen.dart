@@ -10,6 +10,7 @@ import '../land/land_sections.dart';
 import '../land/land_wizard.dart';
 import '../widgets/brand.dart';
 import '../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 /// Lands by village / house group with status filter.
 class LandListScreen extends StatefulWidget {
@@ -28,6 +29,7 @@ class _LandListScreenState extends State<LandListScreen> {
   @override
   Widget build(BuildContext context) {
     final db = AppState.db;
+    final t = context.l10n;
     return StreamBuilder<Snapshot>(
       stream: db.watchSnapshot(),
       builder: (context, snap) {
@@ -48,20 +50,20 @@ class _LandListScreenState extends State<LandListScreen> {
         int count(String st) => all.where((l) => l.status == st).length;
 
         return BrandPage(
-          title: 'ඉඩම්',
-          subtitle: s == null ? null : 'ඉඩම් ${all.length} • සම්පූර්ණ ${count('complete') + count('verified')}',
+          title: t.lands,
+          subtitle: s == null ? null : t.landsSummary(all.length, count('complete') + count('verified')),
           icon: Icons.landscape_rounded,
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => startNewLand(Navigator.of(context)),
             icon: const Icon(Icons.add_home_work_rounded),
-            label: const Text('නව ස්ථානයක්', style: TextStyle(fontWeight: FontWeight.w700)),
+            label: Text(t.newPlace, style: const TextStyle(fontWeight: FontWeight.w700)),
           ),
           headerChild: s == null
               ? null
               : Column(
                   children: [
                     HeaderChips(items: [
-                      ('සියලු ගම්මාන', _villageId == null, () => setState(() {
+                      (t.allVillages, _villageId == null, () => setState(() {
                             _villageId = null;
                             _groupId = null;
                           })),
@@ -73,7 +75,7 @@ class _LandListScreenState extends State<LandListScreen> {
                     ]),
                     const SizedBox(height: 8),
                     HeaderChips(items: [
-                      ('සියලු කණ්ඩායම්', _groupId == null, () => setState(() => _groupId = null)),
+                      (t.allGroups, _groupId == null, () => setState(() => _groupId = null)),
                       for (final g in groups) (g.code, _groupId == g.id, () => setState(() => _groupId = g.id)),
                     ]),
                   ],
@@ -92,7 +94,7 @@ class _LandListScreenState extends State<LandListScreen> {
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 3),
                                 child: _StatusFilter(
-                                  label: statusLabels[st]!,
+                                  label: t.landStatus(st),
                                   count: count(st),
                                   color: statusColor(st),
                                   selected: _status == st,
@@ -105,8 +107,7 @@ class _LandListScreenState extends State<LandListScreen> {
                     ),
                     Expanded(
                       child: lands.isEmpty
-                          ? const EmptyHint('මෙහි ඉඩම් නැත.\n"නව ස්ථානයක්" ඔබා ඇතුළත් කරන්න.',
-                              icon: Icons.landscape_rounded)
+                          ? EmptyHint(t.landsEmpty(t.newPlace), icon: Icons.landscape_rounded)
                           : ListView.builder(
                               padding: const EdgeInsets.fromLTRB(0, 6, 0, 96),
                               itemCount: lands.length,
@@ -152,7 +153,10 @@ class _StatusFilter extends StatelessWidget {
               Text('$count',
                   style: TextStyle(
                       fontSize: 20, fontWeight: FontWeight.w800, color: selected ? Colors.white : color)),
-              Text(label, style: TextStyle(fontSize: 12, color: selected ? Colors.white : Brand.muted)),
+              Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: selected ? Colors.white : Brand.muted)),
             ]),
           ),
         ),

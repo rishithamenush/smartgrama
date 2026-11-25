@@ -12,15 +12,16 @@ import '../land/land_sections.dart';
 import '../widgets/brand.dart';
 import '../widgets/common.dart';
 import '../../theme.dart';
+import '../../l10n/l10n.dart';
 
 enum _Layer { lands, houses, poorHouses, trees }
 
-const _layerLabels = {
-  _Layer.lands: 'ඉඩම්',
-  _Layer.houses: 'නිවාස',
-  _Layer.poorHouses: 'අබලන් නිවාස',
-  _Layer.trees: 'වටිනා ගස්',
-};
+String _layerLabel(AppLocalizations t, _Layer layer) => switch (layer) {
+      _Layer.lands => t.lands,
+      _Layer.houses => t.houses,
+      _Layer.poorHouses => t.dilapidatedHouses,
+      _Layer.trees => t.valuableTrees,
+    };
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -63,8 +64,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                  'ගොඩනැගිලි ${b.buildings.length} • පුද්ගලයින් ${b.persons.length} • ගස් ${b.treeTotal} • සතුන් ${b.animalTotal}'),
+              child: Text(c.l10n.mapLandCounts(b.buildings.length, b.persons.length, b.treeTotal, b.animalTotal)),
             ),
             Padding(
               padding: const EdgeInsets.all(16),
@@ -74,7 +74,7 @@ class _MapScreenState extends State<MapScreen> {
                   push(context, LandCard(landId: l.id));
                 },
                 icon: const Icon(Icons.open_in_new),
-                label: const Text('ඉඩම විවෘත කරන්න'),
+                label: Text(c.l10n.openLand),
               ),
             ),
           ],
@@ -94,14 +94,15 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     final db = AppState.db;
+    final t = context.l10n;
     return BrandPage(
-      title: 'සිතියම',
-      subtitle: 'ඉඩම්, නිවාස හා වටිනා ගස් සිතියම මත',
+      title: t.navMap,
+      subtitle: t.mapSubtitle,
       icon: Icons.map_rounded,
       headerChild: HeaderChips(items: [
         for (final layer in _Layer.values)
           (
-            _layerLabels[layer]!,
+            _layerLabel(t, layer),
             _layers.contains(layer),
             () => setState(() => _layers.contains(layer) ? _layers.remove(layer) : _layers.add(layer)),
           ),
@@ -189,14 +190,14 @@ class _MapScreenState extends State<MapScreen> {
                 ],
               ),
               if (located.isEmpty)
-                const Positioned(
+                Positioned(
                   bottom: 80,
                   left: 16,
                   right: 16,
                   child: Card(
                     child: Padding(
-                      padding: EdgeInsets.all(12),
-                      child: Text('GPS සහිත ඉඩම් තවම නැත. ඉඩමක් ඇතුළත් කිරීමේදී "GPS ගන්න" ඔබන්න.'),
+                      padding: const EdgeInsets.all(12),
+                      child: Text(t.mapNoGps(t.gpsTake)),
                     ),
                   ),
                 ),

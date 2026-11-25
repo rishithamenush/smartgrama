@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme.dart';
+import '../ui/setup/language_screen.dart';
 import '../ui/widgets/art.dart';
 
 import 'key_store.dart';
+import '../l10n/l10n.dart';
 
 /// PIN entry used both for first-time setup (enter twice) and unlocking.
 class PinScreen extends StatefulWidget {
@@ -44,9 +46,9 @@ class _PinScreenState extends State<PinScreen> {
     if (await KeyStore.authenticateBiometric()) widget.onDone();
   }
 
-  String get _title {
-    if (!widget.isSetup) return 'PIN අංකය ඇතුළත් කරන්න';
-    return _first == null ? 'නව PIN අංකයක් (අංක 6) සාදන්න' : 'PIN අංකය නැවත ඇතුළත් කරන්න';
+  String _title(AppLocalizations t) {
+    if (!widget.isSetup) return t.pinEnter;
+    return _first == null ? t.pinCreate : t.pinConfirm;
   }
 
   Future<void> _complete() async {
@@ -63,7 +65,7 @@ class _PinScreenState extends State<PinScreen> {
         setState(() {
           _first = null;
           _pin = '';
-          _error = 'PIN අංක නොගැළපේ — නැවත උත්සාහ කරන්න';
+          _error = context.l10n.pinMismatch;
         });
         return;
       }
@@ -86,13 +88,13 @@ class _PinScreenState extends State<PinScreen> {
       _pin = '';
       if (_failures >= 5) {
         _blockedUntil = DateTime.now().add(const Duration(seconds: 30));
-        _error = 'වැරදි උත්සාහ 5 ක් — තත්පර 30 ක් රැඳී සිටින්න';
+        _error = context.l10n.pinLockedOut;
         Timer(const Duration(seconds: 30), () {
           if (mounted) setState(() => _error = null);
         });
         _failures = 0;
       } else {
-        _error = 'වැරදි PIN අංකයකි';
+        _error = context.l10n.pinWrong;
       }
     });
   }
@@ -111,6 +113,7 @@ class _PinScreenState extends State<PinScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final t = context.l10n;
     final top = MediaQuery.of(context).padding.top;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
@@ -121,22 +124,39 @@ class _PinScreenState extends State<PinScreen> {
               height: top + 230,
               radius: 36,
               houseX: 0.14,
-              child: Padding(
-                padding: EdgeInsets.only(top: top + 28),
-                child: const Column(
-                  children: [
-                    AppLogo(size: 76),
-                    SizedBox(height: 12),
-                    Text('SmartGrama',
-                        style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800)),
-                    Text('ග්‍රාම නිලධාරී වසම් තොරතුරු',
-                        style: TextStyle(color: Brand.goldLight, fontSize: 13)),
-                  ],
-                ),
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(top: top + 28),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          const AppLogo(size: 76),
+                          const SizedBox(height: 12),
+                          const Text('SmartGrama',
+                              style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800)),
+                          Text(t.appTagline, style: const TextStyle(color: Brand.goldLight, fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Language switch, so whoever unlocks can read the screens.
+                  Positioned(
+                    top: top + 4,
+                    right: 8,
+                    child: TextButton.icon(
+                      style: TextButton.styleFrom(foregroundColor: Colors.white),
+                      onPressed: () => showLanguageSheet(context),
+                      icon: const Icon(Icons.translate_rounded, size: 18),
+                      label: Text(L10n.lang.value.nativeName,
+                          style: TextStyle(fontFamily: fontFamilyFor(L10n.lang.value))),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 22),
-            Text(_title,
+            Text(_title(t),
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Brand.brownDark)),
             const SizedBox(height: 14),
             Row(

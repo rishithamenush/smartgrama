@@ -8,6 +8,7 @@ import '../../data/picklists.dart';
 import '../widgets/common.dart';
 import '../widgets/fields.dart';
 import '../widgets/brand.dart';
+import '../../l10n/l10n.dart';
 
 class FamilyForm extends StatefulWidget {
   const FamilyForm({super.key, required this.landId, required this.buildings, this.family});
@@ -38,12 +39,12 @@ class _FamilyFormState extends State<FamilyForm> {
 
   Future<void> _save() async {
     if (_buildingId == null) {
-      snack(context, 'පවුල ජීවත් වන නිවස තෝරන්න');
+      snack(context, context.l10n.selectFamilyHouse);
       return;
     }
     final since = intOf(_since);
     if (since != null && (since < 1900 || since > DateTime.now().year)) {
-      snack(context, 'පදිංචියට පැමිණි වර්ෂය වලංගු නැත');
+      snack(context, context.l10n.sinceYearInvalid);
       return;
     }
     setState(() => _busy = true);
@@ -70,16 +71,16 @@ class _FamilyFormState extends State<FamilyForm> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     return Scaffold(
       appBar: BrandAppBar(
-        title: Text(f == null ? 'නව පවුලක්' : 'පවුලේ තොරතුරු'),
+        title: Text(f == null ? t.newFamily : t.familyDetails),
         actions: [
           if (f != null)
             IconButton(
               icon: const Icon(Icons.delete_outline),
               onPressed: () async {
-                if (await confirm(context, 'මෙම පවුල සහ සාමාජිකයින් ඉවත් කරන්නද? (ඉතිහාසයේ රැඳේ)',
-                    danger: true)) {
+                if (await confirm(context, t.familyDeleteConfirm, danger: true)) {
                   await db.deleteFamilyCascade(f!.id, widget.landId);
                   if (context.mounted) Navigator.pop(context);
                 }
@@ -91,7 +92,7 @@ class _FamilyFormState extends State<FamilyForm> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          const Text('ජීවත් වන ගොඩනැගිල්ල *'),
+          Text(t.livingBuildingField),
           for (final b in widget.buildings)
             ListTile(
               contentPadding: EdgeInsets.zero,
@@ -105,9 +106,9 @@ class _FamilyFormState extends State<FamilyForm> {
           PickField(list: PL.incomeSource, value: _source, onChanged: (v) => setState(() => _source = v)),
           PickField(list: PL.cookingFuel, value: _fuel, onChanged: (v) => setState(() => _fuel = v)),
           MultiPickField(list: PL.welfare, value: _welfare, onChanged: (v) => setState(() => _welfare = v)),
-          TF(_since, 'පදිංචියට පැමිණි වර්ෂය', number: true),
-          TF(_phone, 'දුරකථන අංකය', phone: true),
-          TF(_notes, 'සටහන්', maxLines: 2),
+          TF(_since, t.sinceYearField, number: true),
+          TF(_phone, t.phoneNumber, phone: true),
+          TF(_notes, t.notes, maxLines: 2),
         ],
       ),
     );

@@ -1,30 +1,73 @@
-/// Pick lists ("තේරීම් ලැයිස්තු").
+/// Pick lists ("තේරීම් ලැයිස්තු" / "Pick lists" / "தெரிவுப் பட்டியல்கள்").
 ///
-/// Values are stored in the database as stable [PickOption.code]s, and the
-/// Sinhala label is looked up at display time. This keeps counts accurate
-/// ("පොල්" is always `coconut`) and lets Tamil/English be added later.
+/// Values are stored in the database as stable [PickOption.code]s and the
+/// label is looked up at display time in the current language (Sinhala,
+/// English or Tamil). This keeps counts accurate ("පොල්" / "Coconut" /
+/// "தென்னை" are always `coconut`) and lets the language change without
+/// touching the data.
 ///
 /// The officer can add extra options per list; those live in the
-/// `pick_items` table and are merged in by [PickRegistry].
+/// `pick_items` table, have one label typed by the officer (shown as-is in
+/// every language) and are merged in by [PickRegistry].
 library;
 
+import '../l10n/l10n.dart';
+
+/// A text in the app's three languages.
+class Tri {
+  const Tri(this.si, this.en, this.ta);
+  final String si, en, ta;
+
+  String get text => inLang(L10n.lang.value);
+
+  String inLang(AppLang l) => switch (l) {
+        AppLang.si => si,
+        AppLang.en => en,
+        AppLang.ta => ta,
+      };
+
+  /// Case-insensitive match against any of the three languages, so a
+  /// search typed in one language still finds the option.
+  bool matches(String query) {
+    final q = query.toLowerCase();
+    return si.toLowerCase().contains(q) || en.toLowerCase().contains(q) || ta.toLowerCase().contains(q);
+  }
+}
+
 class PickOption {
-  const PickOption(this.code, this.label);
+  const PickOption(this.code, this.si, this.en, this.ta);
+
+  /// Officer-added option: the same label in every language.
+  const PickOption.custom(this.code, String label)
+      : si = label,
+        en = label,
+        ta = label;
+
   final String code;
-  final String label;
+  final String si, en, ta;
+
+  Tri get names => Tri(si, en, ta);
+
+  /// Label in the current language.
+  String get label => names.text;
 }
 
 class PickListDef {
-  const PickListDef(this.name, this.title, this.options, {this.editable = true});
+  const PickListDef(this.name, this.titles, this.options, {this.editable = true});
   final String name;
-  final String title;
+  final Tri titles;
   final List<PickOption> options;
 
   /// Whether the officer may add custom options to this list.
   final bool editable;
+
+  /// Title in the current language.
+  String get title => titles.text;
 }
 
-const unknown = PickOption('unknown', 'නොදනී');
+const unknown = PickOption('unknown', 'නොදනී', 'Unknown', 'தெரியாது');
+const _other = PickOption('other', 'වෙනත්', 'Other', 'வேறு');
+const _none = PickOption('none', 'නැත', 'None', 'இல்லை');
 
 /// Every pick list used by the app, keyed by [PickListDef.name].
 class PL {
@@ -77,404 +120,410 @@ class PL {
 }
 
 const List<PickListDef> pickListDefs = [
-  // ---------------- ඉඩම ----------------
-  PickListDef(PL.landUse, 'ඉඩම් භාවිතය', [
-    PickOption('home_garden', 'ගෙවත්ත'),
-    PickOption('paddy', 'කුඹුර'),
-    PickOption('tea', 'තේ'),
-    PickOption('coconut', 'පොල්'),
-    PickOption('rubber', 'රබර්'),
-    PickOption('chena', 'හේන'),
-    PickOption('mixed', 'මිශ්‍ර වගාව'),
-    PickOption('vegetable', 'එළවළු'),
-    PickOption('bare', 'හිස් ඉඩම'),
-    PickOption('commercial', 'වාණිජ'),
-    PickOption('religious', 'ආගමික'),
-    PickOption('forest', 'කැලෑ / රක්ෂිත'),
-    PickOption('water_body', 'ජලාශ'),
-    PickOption('other', 'වෙනත්'),
+  // ---------------- ඉඩම / Land / காணி ----------------
+  PickListDef(PL.landUse, Tri('ඉඩම් භාවිතය', 'Land use', 'காணிப் பயன்பாடு'), [
+    PickOption('home_garden', 'ගෙවත්ත', 'Home garden', 'வீட்டுத்தோட்டம்'),
+    PickOption('paddy', 'කුඹුර', 'Paddy field', 'வயல்'),
+    PickOption('tea', 'තේ', 'Tea', 'தேயிலை'),
+    PickOption('coconut', 'පොල්', 'Coconut', 'தென்னை'),
+    PickOption('rubber', 'රබර්', 'Rubber', 'இறப்பர்'),
+    PickOption('chena', 'හේන', 'Chena', 'சேனை'),
+    PickOption('mixed', 'මිශ්‍ර වගාව', 'Mixed cultivation', 'கலப்புப் பயிர்ச்செய்கை'),
+    PickOption('vegetable', 'එළවළු', 'Vegetables', 'மரக்கறி'),
+    PickOption('bare', 'හිස් ඉඩම', 'Bare land', 'வெற்றுக் காணி'),
+    PickOption('commercial', 'වාණිජ', 'Commercial', 'வர்த்தகம்'),
+    PickOption('religious', 'ආගමික', 'Religious', 'மதத் தலம்'),
+    PickOption('forest', 'කැලෑ / රක්ෂිත', 'Forest / reserve', 'காடு / ஒதுக்கம்'),
+    PickOption('water_body', 'ජලාශ', 'Water body', 'நீர்நிலை'),
+    _other,
   ]),
-  PickListDef(PL.ownership, 'අයිතියේ වර්ගය', [
-    PickOption('private_deed', 'පෞද්ගලික ඔප්පු'),
-    PickOption('state_permit', 'රජයේ බලපත්‍ර'),
-    PickOption('jaya_bhoomi', 'ජය භූමි ප්‍රදාන'),
-    PickOption('swarna_bhoomi', 'ස්වර්ණ භූමි ප්‍රදාන'),
-    PickOption('lrc', 'ඉඩම් ප්‍රතිසංස්කරණ කොමිෂන් (LRC)'),
-    PickOption('temple', 'පන්සල් / දේවාල'),
-    PickOption('state', 'රජයේ ඉඩම'),
-    PickOption('reserve', 'රක්ෂිත'),
-    PickOption('lease', 'බදු'),
-    PickOption('encroached', 'අනවසර'),
-    PickOption('disputed', 'ආරවුලක'),
+  PickListDef(PL.ownership, Tri('අයිතියේ වර්ගය', 'Ownership type', 'உரிமை வகை'), [
+    PickOption('private_deed', 'පෞද්ගලික ඔප්පු', 'Private (deed)', 'தனியார் (உறுதி)'),
+    PickOption('state_permit', 'රජයේ බලපත්‍ර', 'State permit', 'அரச அனுமதிப்பத்திரம்'),
+    PickOption('jaya_bhoomi', 'ජය භූමි ප්‍රදාන', 'Jaya Bhoomi grant', 'ஜய பூமி அளிப்பு'),
+    PickOption('swarna_bhoomi', 'ස්වර්ණ භූමි ප්‍රදාන', 'Swarna Bhoomi grant', 'ஸ்வர்ண பூமி அளிப்பு'),
+    PickOption('lrc', 'ඉඩම් ප්‍රතිසංස්කරණ කොමිෂන් (LRC)', 'Land Reform Commission (LRC)',
+        'காணிச் சீர்திருத்த ஆணைக்குழு (LRC)'),
+    PickOption('temple', 'පන්සල් / දේවාල', 'Temple / devale', 'விகாரை / தேவாலயம்'),
+    PickOption('state', 'රජයේ ඉඩම', 'State land', 'அரச காணி'),
+    PickOption('reserve', 'රක්ෂිත', 'Reserve', 'ஒதுக்கக் காணி'),
+    PickOption('lease', 'බදු', 'Lease', 'குத்தகை'),
+    PickOption('encroached', 'අනවසර', 'Encroached', 'அனுமதியற்றது'),
+    PickOption('disputed', 'ආරවුලක', 'Under dispute', 'பிணக்கில் உள்ளது'),
     unknown,
   ]),
-  PickListDef(PL.extentSource, 'ප්‍රමාණයේ මූලාශ්‍රය', [
-    PickOption('deed', 'ඔප්පුව'),
-    PickOption('plan', 'පිඹුර'),
-    PickOption('estimate', 'ඇස්තමේන්තු'),
-    PickOption('gps', 'GPS මැනීම'),
+  PickListDef(PL.extentSource, Tri('ප්‍රමාණයේ මූලාශ්‍රය', 'Source of extent', 'பரப்பளவின் மூலம்'), [
+    PickOption('deed', 'ඔප්පුව', 'Deed', 'உறுதி'),
+    PickOption('plan', 'පිඹුර', 'Survey plan', 'நில அளவை வரைபடம்'),
+    PickOption('estimate', 'ඇස්තමේන්තු', 'Estimate', 'மதிப்பீடு'),
+    PickOption('gps', 'GPS මැනීම', 'GPS measurement', 'GPS அளவீடு'),
   ], editable: false),
-  PickListDef(PL.partyRole, 'ඉඩමට සම්බන්ධතාව', [
-    PickOption('owner', 'අයිතිකරු'),
-    PickOption('occupant', 'පදිංචිකරු / භුක්තිය'),
-    PickOption('heir', 'උරුමකරු'),
-    PickOption('lessee', 'බදුකරු'),
-    PickOption('tenant_farmer', 'අඳ ගොවියා'),
+  PickListDef(PL.partyRole, Tri('ඉඩමට සම්බන්ධතාව', 'Relationship to land', 'காணியுடனான தொடர்பு'), [
+    PickOption('owner', 'අයිතිකරු', 'Owner', 'உரிமையாளர்'),
+    PickOption('occupant', 'පදිංචිකරු / භුක්තිය', 'Occupant / possessor', 'குடியிருப்பாளர் / அனுபவிப்பவர்'),
+    PickOption('heir', 'උරුමකරු', 'Heir', 'வாரிசு'),
+    PickOption('lessee', 'බදුකරු', 'Lessee', 'குத்தகைதாரர்'),
+    PickOption('tenant_farmer', 'අඳ ගොවියා', 'Tenant cultivator (ande)', 'குத்தகைப் பயிர்ச்செய்கையாளர்'),
   ], editable: false),
-  PickListDef(PL.yesNoUnknown, 'ඔව් / නැත', [
-    PickOption('yes', 'ඔව්'),
-    PickOption('no', 'නැත'),
+  PickListDef(PL.yesNoUnknown, Tri('ඔව් / නැත', 'Yes / no', 'ஆம் / இல்லை'), [
+    PickOption('yes', 'ඔව්', 'Yes', 'ஆம்'),
+    PickOption('no', 'නැත', 'No', 'இல்லை'),
     unknown,
   ], editable: false),
-  PickListDef(PL.infoSource, 'තොරතුරු මූලාශ්‍රය', [
-    PickOption('observed', 'ස්ථානයට ගොස් නිරීක්ෂණය'),
-    PickOption('told', 'පවුලේ සාමාජිකයා පැවසීම'),
-    PickOption('document', 'ලේඛනයෙන් (ඔප්පුව, හැඳුනුම්පත)'),
-    PickOption('old_register', 'පැරණි ගෘහ ලේඛනයෙන්'),
+  PickListDef(PL.infoSource, Tri('තොරතුරු මූලාශ්‍රය', 'Source of information', 'தகவல் மூலம்'), [
+    PickOption('observed', 'ස්ථානයට ගොස් නිරීක්ෂණය', 'Observed on site', 'இடத்திற்குச் சென்று அவதானித்தது'),
+    PickOption('told', 'පවුලේ සාමාජිකයා පැවසීම', 'Told by a family member', 'குடும்ப உறுப்பினர் கூறியது'),
+    PickOption('document', 'ලේඛනයෙන් (ඔප්පුව, හැඳුනුම්පත)', 'From a document (deed, NIC)',
+        'ஆவணத்திலிருந்து (உறுதி, அடையாள அட்டை)'),
+    PickOption('old_register', 'පැරණි ගෘහ ලේඛනයෙන්', 'From the old household register',
+        'பழைய வீட்டுப் பதிவேட்டிலிருந்து'),
   ], editable: false),
 
-  // ---------------- ගොඩනැගිලි ----------------
-  PickListDef(PL.buildingType, 'ගොඩනැගිලි වර්ගය', [
-    PickOption('house', 'නිවස'),
-    PickOption('shop', 'කඩය'),
-    PickOption('store', 'ගබඩාව'),
-    PickOption('cattle_shed', 'ගව මඩුව'),
-    PickOption('poultry_house', 'කුකුළු කූඩුව'),
-    PickOption('pig_sty', 'ඌරු කොටුව'),
-    PickOption('toilet', 'වැසිකිළිය'),
-    PickOption('well', 'ළිඳ'),
-    PickOption('garage', 'වාහන ගාල'),
-    PickOption('industry', 'කර්මාන්ත ස්ථානය'),
-    PickOption('religious', 'ආගමික ගොඩනැගිල්ල'),
-    PickOption('school', 'පාසල'),
-    PickOption('community_hall', 'ප්‍රජා ශාලාව'),
-    PickOption('unfinished', 'නොනිමි ගොඩනැගිල්ල'),
-    PickOption('other', 'වෙනත්'),
+  // ---------------- ගොඩනැගිලි / Buildings / கட்டடங்கள் ----------------
+  PickListDef(PL.buildingType, Tri('ගොඩනැගිලි වර්ගය', 'Building type', 'கட்டட வகை'), [
+    PickOption('house', 'නිවස', 'House', 'வீடு'),
+    PickOption('shop', 'කඩය', 'Shop', 'கடை'),
+    PickOption('store', 'ගබඩාව', 'Store', 'களஞ்சியம்'),
+    PickOption('cattle_shed', 'ගව මඩුව', 'Cattle shed', 'மாட்டுக் கொட்டில்'),
+    PickOption('poultry_house', 'කුකුළු කූඩුව', 'Poultry house', 'கோழிக் கூடு'),
+    PickOption('pig_sty', 'ඌරු කොටුව', 'Pigsty', 'பன்றிக் கொட்டில்'),
+    PickOption('toilet', 'වැසිකිළිය', 'Toilet', 'மலசலகூடம்'),
+    PickOption('well', 'ළිඳ', 'Well', 'கிணறு'),
+    PickOption('garage', 'වාහන ගාල', 'Garage', 'வாகனத் தரிப்பிடம்'),
+    PickOption('industry', 'කර්මාන්ත ස්ථානය', 'Industrial workshop', 'கைத்தொழில் நிலையம்'),
+    PickOption('religious', 'ආගමික ගොඩනැගිල්ල', 'Religious building', 'மதக் கட்டடம்'),
+    PickOption('school', 'පාසල', 'School', 'பாடசாலை'),
+    PickOption('community_hall', 'ප්‍රජා ශාලාව', 'Community hall', 'சமூக மண்டபம்'),
+    PickOption('unfinished', 'නොනිමි ගොඩනැගිල්ල', 'Unfinished building', 'பூர்த்தியடையாத கட்டடம்'),
+    _other,
   ]),
-  PickListDef(PL.wall, 'බිත්ති', [
-    PickOption('brick', 'ගඩොල්'),
-    PickOption('cement_block', 'සිමෙන්ති බ්ලොක්'),
-    PickOption('cabook', 'කබොක්'),
-    PickOption('mud', 'මැටි'),
-    PickOption('wood', 'ලෑලි'),
-    PickOption('metal_sheet', 'ටකරන්'),
-    PickOption('other', 'වෙනත්'),
+  PickListDef(PL.wall, Tri('බිත්ති', 'Walls', 'சுவர்கள்'), [
+    PickOption('brick', 'ගඩොල්', 'Brick', 'செங்கல்'),
+    PickOption('cement_block', 'සිමෙන්ති බ්ලොක්', 'Cement block', 'சீமெந்துக் கல்'),
+    PickOption('cabook', 'කබොක්', 'Cabook', 'கபுக்'),
+    PickOption('mud', 'මැටි', 'Mud', 'களிமண்'),
+    PickOption('wood', 'ලෑලි', 'Wooden planks', 'மரப்பலகை'),
+    PickOption('metal_sheet', 'ටකරන්', 'Metal sheet', 'தகரம்'),
+    _other,
   ]),
-  PickListDef(PL.roof, 'වහලය', [
-    PickOption('tile', 'උළු'),
-    PickOption('asbestos', 'ඇස්බැස්ටෝස්'),
-    PickOption('metal_sheet', 'ටකරන්'),
-    PickOption('concrete', 'කොන්ක්‍රීට්'),
-    PickOption('cadjan', 'පොල් අතු / පිදුරු'),
-    PickOption('other', 'වෙනත්'),
+  PickListDef(PL.roof, Tri('වහලය', 'Roof', 'கூரை'), [
+    PickOption('tile', 'උළු', 'Tile', 'ஓடு'),
+    PickOption('asbestos', 'ඇස්බැස්ටෝස්', 'Asbestos', 'அஸ்பெஸ்டோஸ்'),
+    PickOption('metal_sheet', 'ටකරන්', 'Metal sheet', 'தகரம்'),
+    PickOption('concrete', 'කොන්ක්‍රීට්', 'Concrete', 'கொங்கிறீற்'),
+    PickOption('cadjan', 'පොල් අතු / පිදුරු', 'Cadjan / straw', 'கிடுகு / வைக்கோல்'),
+    _other,
   ]),
-  PickListDef(PL.floor, 'පොළොව', [
-    PickOption('tile', 'ටයිල්'),
-    PickOption('cement', 'සිමෙන්ති'),
-    PickOption('terrazzo', 'ටෙරාසෝ'),
-    PickOption('mud', 'මැටි'),
-    PickOption('other', 'වෙනත්'),
+  PickListDef(PL.floor, Tri('පොළොව', 'Floor', 'தரை'), [
+    PickOption('tile', 'ටයිල්', 'Floor tiles', 'தரை ஓடு'),
+    PickOption('cement', 'සිමෙන්ති', 'Cement', 'சீமெந்து'),
+    PickOption('terrazzo', 'ටෙරාසෝ', 'Terrazzo', 'டெரசோ'),
+    PickOption('mud', 'මැටි', 'Mud', 'களிமண்'),
+    _other,
   ]),
-  PickListDef(PL.permanence, 'ස්ථිරභාවය', [
-    PickOption('permanent', 'ස්ථිර'),
-    PickOption('semi', 'අර්ධ ස්ථිර'),
-    PickOption('temporary', 'තාවකාලික'),
+  PickListDef(PL.permanence, Tri('ස්ථිරභාවය', 'Permanence', 'நிரந்தரத்தன்மை'), [
+    PickOption('permanent', 'ස්ථිර', 'Permanent', 'நிரந்தரம்'),
+    PickOption('semi', 'අර්ධ ස්ථිර', 'Semi-permanent', 'அரை நிரந்தரம்'),
+    PickOption('temporary', 'තාවකාලික', 'Temporary', 'தற்காலிகம்'),
   ], editable: false),
-  PickListDef(PL.condition, 'තත්ත්වය', [
-    PickOption('good', 'හොඳයි'),
-    PickOption('fair', 'සාමාන්‍යයි'),
-    PickOption('poor', 'අබලන්'),
-    PickOption('unusable', 'භාවිතයට නුසුදුසුයි'),
+  PickListDef(PL.condition, Tri('තත්ත්වය', 'Condition', 'நிலைமை'), [
+    PickOption('good', 'හොඳයි', 'Good', 'நன்று'),
+    PickOption('fair', 'සාමාන්‍යයි', 'Fair', 'சாதாரணம்'),
+    PickOption('poor', 'අබලන්', 'Dilapidated', 'சிதைவடைந்தது'),
+    PickOption('unusable', 'භාවිතයට නුසුදුසුයි', 'Unfit for use', 'பயன்படுத்தத் தகுதியற்றது'),
   ], editable: false),
-  PickListDef(PL.buildingUsage, 'භාවිතය', [
-    PickOption('residence', 'වාසය'),
-    PickOption('commercial', 'වාණිජ'),
-    PickOption('mixed', 'මිශ්‍ර'),
-    PickOption('vacant', 'හිස්'),
-    PickOption('rented', 'කුලියට'),
-    PickOption('other', 'වෙනත්'),
+  PickListDef(PL.buildingUsage, Tri('භාවිතය', 'Use', 'பயன்பாடு'), [
+    PickOption('residence', 'වාසය', 'Residence', 'குடியிருப்பு'),
+    PickOption('commercial', 'වාණිජ', 'Commercial', 'வர்த்தகம்'),
+    PickOption('mixed', 'මිශ්‍ර', 'Mixed', 'கலப்பு'),
+    PickOption('vacant', 'හිස්', 'Vacant', 'வெறுமை'),
+    PickOption('rented', 'කුලියට', 'Rented out', 'வாடகைக்கு'),
+    _other,
   ]),
-  PickListDef(PL.electricity, 'විදුලිය', [
-    PickOption('grid', 'ජාතික ජාලය'),
-    PickOption('solar', 'සූර්ය'),
-    PickOption('none', 'නැත'),
+  PickListDef(PL.electricity, Tri('විදුලිය', 'Electricity', 'மின்சாரம்'), [
+    PickOption('grid', 'ජාතික ජාලය', 'National grid', 'தேசிய மின்கட்டமைப்பு'),
+    PickOption('solar', 'සූර්ය', 'Solar', 'சூரிய சக்தி'),
+    _none,
   ]),
-  PickListDef(PL.water, 'ජල මූලාශ්‍රය', [
-    PickOption('pipe_national', 'නළ ජලය (ජාතික)'),
-    PickOption('pipe_community', 'ප්‍රජා ජල ව්‍යාපෘතිය'),
-    PickOption('protected_well', 'ආරක්ෂිත ළිඳ'),
-    PickOption('unprotected_well', 'අනාරක්ෂිත ළිඳ'),
-    PickOption('tube_well', 'නළ ළිඳ'),
-    PickOption('stream', 'දිය පහර / ඇළ'),
-    PickOption('bowser', 'ජල බවුසර්'),
-    PickOption('other', 'වෙනත්'),
+  PickListDef(PL.water, Tri('ජල මූලාශ්‍රය', 'Water source', 'நீர் மூலம்'), [
+    PickOption('pipe_national', 'නළ ජලය (ජාතික)', 'Pipe-borne (national)', 'குழாய் நீர் (தேசிய)'),
+    PickOption('pipe_community', 'ප්‍රජා ජල ව්‍යාපෘතිය', 'Community water project', 'சமூக நீர் வழங்கல் திட்டம்'),
+    PickOption('protected_well', 'ආරක්ෂිත ළිඳ', 'Protected well', 'பாதுகாக்கப்பட்ட கிணறு'),
+    PickOption('unprotected_well', 'අනාරක්ෂිත ළිඳ', 'Unprotected well', 'பாதுகாப்பற்ற கிணறு'),
+    PickOption('tube_well', 'නළ ළිඳ', 'Tube well', 'குழாய்க் கிணறு'),
+    PickOption('stream', 'දිය පහර / ඇළ', 'Stream / canal', 'நீரோடை / கால்வாய்'),
+    PickOption('bowser', 'ජල බවුසර්', 'Water bowser', 'நீர் பவுசர்'),
+    _other,
   ]),
-  PickListDef(PL.toilet, 'වැසිකිළිය', [
-    PickOption('water_seal_in', 'ජල මුද්‍රිත (නිවස තුළ)'),
-    PickOption('water_seal_out', 'ජල මුද්‍රිත (පිටත)'),
-    PickOption('pit', 'වළ වැසිකිළිය'),
-    PickOption('common', 'පොදු'),
-    PickOption('none', 'නැත'),
+  PickListDef(PL.toilet, Tri('වැසිකිළිය', 'Toilet', 'மலசலகூடம்'), [
+    PickOption('water_seal_in', 'ජල මුද්‍රිත (නිවස තුළ)', 'Water-seal (inside the house)', 'நீர் அடைப்பு (வீட்டினுள்)'),
+    PickOption('water_seal_out', 'ජල මුද්‍රිත (පිටත)', 'Water-seal (outside)', 'நீர் அடைப்பு (வெளியே)'),
+    PickOption('pit', 'වළ වැසිකිළිය', 'Pit latrine', 'குழி மலசலகூடம்'),
+    PickOption('common', 'පොදු', 'Shared', 'பொது'),
+    _none,
   ]),
 
-  // ---------------- පවුල ----------------
-  PickListDef(PL.tenure, 'නිවසට ඇති අයිතිය', [
-    PickOption('own', 'තමන්ගේ'),
-    PickOption('rent', 'කුලියට'),
-    PickOption('free', 'නොමිලේ (නෑදෑයින්ගේ)'),
-    PickOption('encroached', 'අනවසර'),
+  // ---------------- පවුල / Family / குடும்பம் ----------------
+  PickListDef(PL.tenure, Tri('නිවසට ඇති අයිතිය', 'House tenure', 'வீட்டின் மீதான உரிமை'), [
+    PickOption('own', 'තමන්ගේ', 'Owned', 'சொந்தம்'),
+    PickOption('rent', 'කුලියට', 'Rented', 'வாடகை'),
+    PickOption('free', 'නොමිලේ (නෑදෑයින්ගේ)', "Free (relatives')", 'இலவசம் (உறவினருடையது)'),
+    PickOption('encroached', 'අනවසර', 'Encroached', 'அனுமதியற்றது'),
     unknown,
   ]),
-  PickListDef(PL.incomeRange, 'මාසික ආදායම', [
-    PickOption('lt25', 'රු. 25,000 ට අඩු'),
-    PickOption('25_50', 'රු. 25,000 – 50,000'),
-    PickOption('50_100', 'රු. 50,000 – 100,000'),
-    PickOption('100_200', 'රු. 100,000 – 200,000'),
-    PickOption('gt200', 'රු. 200,000 ට වැඩි'),
-    PickOption('declined', 'ලබා දීමට අකමැතියි'),
+  PickListDef(PL.incomeRange, Tri('මාසික ආදායම', 'Monthly income', 'மாதாந்த வருமானம்'), [
+    PickOption('lt25', 'රු. 25,000 ට අඩු', 'Under Rs. 25,000', 'ரூ. 25,000 இற்குக் குறைவு'),
+    PickOption('25_50', 'රු. 25,000 – 50,000', 'Rs. 25,000 – 50,000', 'ரூ. 25,000 – 50,000'),
+    PickOption('50_100', 'රු. 50,000 – 100,000', 'Rs. 50,000 – 100,000', 'ரூ. 50,000 – 100,000'),
+    PickOption('100_200', 'රු. 100,000 – 200,000', 'Rs. 100,000 – 200,000', 'ரூ. 100,000 – 200,000'),
+    PickOption('gt200', 'රු. 200,000 ට වැඩි', 'Over Rs. 200,000', 'ரூ. 200,000 இற்கு மேல்'),
+    PickOption('declined', 'ලබා දීමට අකමැතියි', 'Declined to say', 'தெரிவிக்க விரும்பவில்லை'),
     unknown,
   ], editable: false),
-  PickListDef(PL.incomeSource, 'ප්‍රධාන ආදායම් මාර්ගය', [
-    PickOption('govt', 'රජයේ රැකියා'),
-    PickOption('private', 'පෞද්ගලික රැකියා'),
-    PickOption('self', 'ස්වයං රැකියා'),
-    PickOption('farming', 'ගොවිතැන'),
-    PickOption('livestock', 'සත්ව පාලනය'),
-    PickOption('daily_wage', 'දෛනික වැටුප්'),
-    PickOption('foreign', 'විදේශ රැකියා'),
-    PickOption('pension', 'විශ්‍රාම වැටුප'),
-    PickOption('welfare', 'සුබසාධන දීමනා'),
-    PickOption('business', 'ව්‍යාපාර'),
-    PickOption('other', 'වෙනත්'),
+  PickListDef(PL.incomeSource, Tri('ප්‍රධාන ආදායම් මාර්ගය', 'Main source of income', 'பிரதான வருமான மூலம்'), [
+    PickOption('govt', 'රජයේ රැකියා', 'Government job', 'அரச தொழில்'),
+    PickOption('private', 'පෞද්ගලික රැකියා', 'Private-sector job', 'தனியார் தொழில்'),
+    PickOption('self', 'ස්වයං රැකියා', 'Self-employment', 'சுயதொழில்'),
+    PickOption('farming', 'ගොවිතැන', 'Farming', 'விவசாயம்'),
+    PickOption('livestock', 'සත්ව පාලනය', 'Livestock', 'கால்நடை வளர்ப்பு'),
+    PickOption('daily_wage', 'දෛනික වැටුප්', 'Daily wages', 'நாட்கூலி'),
+    PickOption('foreign', 'විදේශ රැකියා', 'Foreign employment', 'வெளிநாட்டு வேலைவாய்ப்பு'),
+    PickOption('pension', 'විශ්‍රාම වැටුප', 'Pension', 'ஓய்வூதியம்'),
+    PickOption('welfare', 'සුබසාධන දීමනා', 'Welfare payments', 'நலன்புரிக் கொடுப்பனவுகள்'),
+    PickOption('business', 'ව්‍යාපාර', 'Business', 'வியாபாரம்'),
+    _other,
   ]),
-  PickListDef(PL.cookingFuel, 'ඉන්ධන', [
-    PickOption('gas', 'ගෑස්'),
-    PickOption('firewood', 'දර'),
-    PickOption('electric', 'විදුලි'),
-    PickOption('kerosene', 'භූමිතෙල්'),
-    PickOption('other', 'වෙනත්'),
+  PickListDef(PL.cookingFuel, Tri('ඉන්ධන', 'Cooking fuel', 'சமையல் எரிபொருள்'), [
+    PickOption('gas', 'ගෑස්', 'Gas', 'எரிவாயு'),
+    PickOption('firewood', 'දර', 'Firewood', 'விறகு'),
+    PickOption('electric', 'විදුලි', 'Electricity', 'மின்சாரம்'),
+    PickOption('kerosene', 'භූමිතෙල්', 'Kerosene', 'மண்ணெண்ணெய்'),
+    _other,
   ]),
-  PickListDef(PL.welfare, 'සුබසාධන ප්‍රතිලාභ', [
-    PickOption('aswesuma', 'අස්වැසුම'),
-    PickOption('samurdhi', 'සමෘද්ධි'),
-    PickOption('elderly', 'වැඩිහිටි දීමනා'),
-    PickOption('disability', 'ආබාධිත දීමනා'),
-    PickOption('ckd', 'වකුගඩු රෝගී දීමනා'),
-    PickOption('public_assistance', 'මහජනාධාර'),
-    PickOption('other', 'වෙනත්'),
+  PickListDef(PL.welfare, Tri('සුබසාධන ප්‍රතිලාභ', 'Welfare benefits', 'நலன்புரி நன்மைகள்'), [
+    PickOption('aswesuma', 'අස්වැසුම', 'Aswesuma', 'அஸ்வெசும'),
+    PickOption('samurdhi', 'සමෘද්ධි', 'Samurdhi', 'சமுர்த்தி'),
+    PickOption('elderly', 'වැඩිහිටි දීමනා', 'Elderly allowance', 'முதியோர் கொடுப்பனவு'),
+    PickOption('disability', 'ආබාධිත දීමනා', 'Disability allowance', 'மாற்றுத்திறனாளிக் கொடுப்பனவு'),
+    PickOption('ckd', 'වකුගඩු රෝගී දීමනා', 'Kidney patient allowance', 'சிறுநீரக நோயாளர் கொடுப்பனவு'),
+    PickOption('public_assistance', 'මහජනාධාර', 'Public assistance', 'பொது உதவிக் கொடுப்பனவு'),
+    _other,
   ]),
 
-  // ---------------- පුද්ගලයා ----------------
-  PickListDef(PL.gender, 'ස්ත්‍රී / පුරුෂ', [
-    PickOption('m', 'පුරුෂ'),
-    PickOption('f', 'ස්ත්‍රී'),
+  // ---------------- පුද්ගලයා / Person / நபர் ----------------
+  PickListDef(PL.gender, Tri('ස්ත්‍රී / පුරුෂ', 'Sex', 'பால்'), [
+    PickOption('m', 'පුරුෂ', 'Male', 'ஆண்'),
+    PickOption('f', 'ස්ත්‍රී', 'Female', 'பெண்'),
   ], editable: false),
-  PickListDef(PL.relation, 'ප්‍රධානියාට සම්බන්ධතාව', [
-    PickOption('head', 'ප්‍රධානියා'),
-    PickOption('spouse', 'භාර්යාව / ස්වාමියා'),
-    PickOption('son', 'පුතා'),
-    PickOption('daughter', 'දුව'),
-    PickOption('father', 'පියා'),
-    PickOption('mother', 'මව'),
-    PickOption('grandchild', 'මුණුබුරා / මිණිබිරිය'),
-    PickOption('son_in_law', 'බෑණා'),
-    PickOption('daughter_in_law', 'ලේලි'),
-    PickOption('sibling', 'සහෝදර / සහෝදරිය'),
-    PickOption('other_relative', 'වෙනත් ඥාතියෙක්'),
-    PickOption('non_relative', 'ඥාති නොවන'),
+  PickListDef(PL.relation, Tri('ප්‍රධානියාට සම්බන්ධතාව', 'Relationship to head', 'தலைவருடனான உறவுமுறை'), [
+    PickOption('head', 'ප්‍රධානියා', 'Head', 'தலைவர்'),
+    PickOption('spouse', 'භාර්යාව / ස්වාමියා', 'Wife / husband', 'மனைவி / கணவன்'),
+    PickOption('son', 'පුතා', 'Son', 'மகன்'),
+    PickOption('daughter', 'දුව', 'Daughter', 'மகள்'),
+    PickOption('father', 'පියා', 'Father', 'தந்தை'),
+    PickOption('mother', 'මව', 'Mother', 'தாய்'),
+    PickOption('grandchild', 'මුණුබුරා / මිණිබිරිය', 'Grandson / granddaughter', 'பேரன் / பேத்தி'),
+    PickOption('son_in_law', 'බෑණා', 'Son-in-law', 'மருமகன்'),
+    PickOption('daughter_in_law', 'ලේලි', 'Daughter-in-law', 'மருமகள்'),
+    PickOption('sibling', 'සහෝදර / සහෝදරිය', 'Brother / sister', 'சகோதரன் / சகோதரி'),
+    PickOption('other_relative', 'වෙනත් ඥාතියෙක්', 'Other relative', 'வேறு உறவினர்'),
+    PickOption('non_relative', 'ඥාති නොවන', 'Non-relative', 'உறவினர் அல்லாதவர்'),
   ]),
-  PickListDef(PL.ethnicity, 'ජාතිය', [
-    PickOption('sinhala', 'සිංහල'),
-    PickOption('sl_tamil', 'ශ්‍රී ලාංකික දෙමළ'),
-    PickOption('indian_tamil', 'ඉන්දියානු දෙමළ'),
-    PickOption('muslim', 'මුස්ලිම්'),
-    PickOption('burgher', 'බර්ගර්'),
-    PickOption('other', 'වෙනත්'),
+  PickListDef(PL.ethnicity, Tri('ජාතිය', 'Ethnicity', 'இனம்'), [
+    PickOption('sinhala', 'සිංහල', 'Sinhala', 'சிங்களவர்'),
+    PickOption('sl_tamil', 'ශ්‍රී ලාංකික දෙමළ', 'Sri Lankan Tamil', 'இலங்கைத் தமிழர்'),
+    PickOption('indian_tamil', 'ඉන්දියානු දෙමළ', 'Indian Tamil', 'இந்தியத் தமிழர்'),
+    PickOption('muslim', 'මුස්ලිම්', 'Muslim', 'முஸ்லிம்'),
+    PickOption('burgher', 'බර්ගර්', 'Burgher', 'பறங்கியர்'),
+    _other,
   ]),
-  PickListDef(PL.religion, 'ආගම', [
-    PickOption('buddhist', 'බෞද්ධ'),
-    PickOption('hindu', 'හින්දු'),
-    PickOption('islam', 'ඉස්ලාම්'),
-    PickOption('catholic', 'රෝමානු කතෝලික'),
-    PickOption('christian', 'ක්‍රිස්තියානි'),
-    PickOption('other', 'වෙනත්'),
+  PickListDef(PL.religion, Tri('ආගම', 'Religion', 'மதம்'), [
+    PickOption('buddhist', 'බෞද්ධ', 'Buddhist', 'பௌத்தம்'),
+    PickOption('hindu', 'හින්දු', 'Hindu', 'இந்து'),
+    PickOption('islam', 'ඉස්ලාම්', 'Islam', 'இஸ்லாம்'),
+    PickOption('catholic', 'රෝමානු කතෝලික', 'Roman Catholic', 'றோமன் கத்தோலிக்கம்'),
+    PickOption('christian', 'ක්‍රිස්තියානි', 'Christian', 'கிறிஸ்தவம்'),
+    _other,
   ]),
-  PickListDef(PL.civilStatus, 'විවාහක තත්ත්වය', [
-    PickOption('single', 'අවිවාහක'),
-    PickOption('married', 'විවාහක'),
-    PickOption('widowed', 'වැන්දඹු'),
-    PickOption('divorced', 'දික්කසාද'),
-    PickOption('separated', 'වෙන්ව සිටී'),
+  PickListDef(PL.civilStatus, Tri('විවාහක තත්ත්වය', 'Civil status', 'திருமண நிலை'), [
+    PickOption('single', 'අවිවාහක', 'Never married', 'திருமணமாகாதவர்'),
+    PickOption('married', 'විවාහක', 'Married', 'திருமணமானவர்'),
+    PickOption('widowed', 'වැන්දඹු', 'Widowed', 'துணையை இழந்தவர்'),
+    PickOption('divorced', 'දික්කසාද', 'Divorced', 'விவாகரத்துப் பெற்றவர்'),
+    PickOption('separated', 'වෙන්ව සිටී', 'Separated', 'பிரிந்து வாழ்பவர்'),
   ], editable: false),
-  PickListDef(PL.education, 'අධ්‍යාපනය', [
-    PickOption('preschool', 'පෙර පාසල් / පාසල් නොයන ළමයා'),
-    PickOption('schooling', 'දැනට පාසල් යයි'),
-    PickOption('none', 'පාසල් නොගිය'),
-    PickOption('g1_5', '1 – 5 ශ්‍රේණි'),
-    PickOption('g6_11', '6 – 11 ශ්‍රේණි'),
-    PickOption('ol', 'අ.පො.ස. සාමාන්‍ය පෙළ'),
-    PickOption('al', 'අ.පො.ස. උසස් පෙළ'),
-    PickOption('diploma', 'ඩිප්ලෝමා'),
-    PickOption('degree', 'උපාධි'),
-    PickOption('postgrad', 'පශ්චාත් උපාධි'),
+  PickListDef(PL.education, Tri('අධ්‍යාපනය', 'Education', 'கல்வி'), [
+    PickOption('preschool', 'පෙර පාසල් / පාසල් නොයන ළමයා', 'Pre-school / not yet at school',
+        'முன்பள்ளி / பாடசாலை செல்லாத சிறுவர்'),
+    PickOption('schooling', 'දැනට පාසල් යයි', 'Currently at school', 'தற்போது பாடசாலை செல்கிறார்'),
+    PickOption('none', 'පාසල් නොගිය', 'Never attended school', 'பாடசாலை செல்லாதவர்'),
+    PickOption('g1_5', '1 – 5 ශ්‍රේණි', 'Grades 1 – 5', 'தரம் 1 – 5'),
+    PickOption('g6_11', '6 – 11 ශ්‍රේණි', 'Grades 6 – 11', 'தரம் 6 – 11'),
+    PickOption('ol', 'අ.පො.ස. සාමාන්‍ය පෙළ', 'G.C.E. O/L', 'க.பொ.த. சாதாரண தரம்'),
+    PickOption('al', 'අ.පො.ස. උසස් පෙළ', 'G.C.E. A/L', 'க.பொ.த. உயர் தரம்'),
+    PickOption('diploma', 'ඩිප්ලෝමා', 'Diploma', 'டிப்ளோமா'),
+    PickOption('degree', 'උපාධි', 'Degree', 'பட்டம்'),
+    PickOption('postgrad', 'පශ්චාත් උපාධි', 'Postgraduate', 'பட்டப்பின்படிப்பு'),
   ]),
-  PickListDef(PL.occupation, 'රැකියාව', [
-    PickOption('govt', 'රජයේ රැකියා'),
-    PickOption('private', 'පෞද්ගලික රැකියා'),
-    PickOption('self', 'ස්වයං රැකියා'),
-    PickOption('farmer', 'ගොවිතැන'),
-    PickOption('daily_wage', 'දෛනික වැටුප්'),
-    PickOption('foreign', 'විදේශ රැකියා'),
-    PickOption('retired', 'විශ්‍රාමික'),
-    PickOption('unemployed', 'විරැකියා'),
-    PickOption('student', 'ශිෂ්‍ය'),
-    PickOption('homemaker', 'ගෘහණිය'),
-    PickOption('child', 'ළමයා'),
-    PickOption('other', 'වෙනත්'),
+  PickListDef(PL.occupation, Tri('රැකියාව', 'Occupation', 'தொழில்'), [
+    PickOption('govt', 'රජයේ රැකියා', 'Government job', 'அரச தொழில்'),
+    PickOption('private', 'පෞද්ගලික රැකියා', 'Private-sector job', 'தனியார் தொழில்'),
+    PickOption('self', 'ස්වයං රැකියා', 'Self-employed', 'சுயதொழில்'),
+    PickOption('farmer', 'ගොවිතැන', 'Farming', 'விவசாயம்'),
+    PickOption('daily_wage', 'දෛනික වැටුප්', 'Daily wages', 'நாட்கூலி'),
+    PickOption('foreign', 'විදේශ රැකියා', 'Foreign employment', 'வெளிநாட்டு வேலைவாய்ப்பு'),
+    PickOption('retired', 'විශ්‍රාමික', 'Retired', 'ஓய்வுபெற்றவர்'),
+    PickOption('unemployed', 'විරැකියා', 'Unemployed', 'வேலையற்றவர்'),
+    PickOption('student', 'ශිෂ්‍ය', 'Student', 'மாணவர்'),
+    PickOption('homemaker', 'ගෘහණිය', 'Homemaker', 'இல்லத்தரசி'),
+    PickOption('child', 'ළමයා', 'Child', 'சிறுவர்'),
+    _other,
   ]),
-  PickListDef(PL.disability, 'ආබාධ', [
-    PickOption('none', 'නැත'),
-    PickOption('physical', 'ශාරීරික'),
-    PickOption('visual', 'දෘශ්‍ය'),
-    PickOption('hearing', 'ශ්‍රවණ'),
-    PickOption('mental', 'මානසික'),
-    PickOption('other', 'වෙනත්'),
+  PickListDef(PL.disability, Tri('ආබාධ', 'Disability', 'மாற்றுத்திறன்'), [
+    _none,
+    PickOption('physical', 'ශාරීරික', 'Physical', 'உடல்'),
+    PickOption('visual', 'දෘශ්‍ය', 'Visual', 'பார்வை'),
+    PickOption('hearing', 'ශ්‍රවණ', 'Hearing', 'செவிப்புலன்'),
+    PickOption('mental', 'මානසික', 'Mental', 'உளம்'),
+    _other,
   ]),
-  PickListDef(PL.personStatus, 'පදිංචි තත්ත්වය', [
-    PickOption('resident', 'පදිංචිව සිටී'),
-    PickOption('away', 'තාවකාලිකව නැත (විදේශ / රැකියා)'),
-    PickOption('moved', 'පදිංචිය හැර ගොස්'),
-    PickOption('dead', 'මියගොස්'),
-  ], editable: false),
-
-  // ---------------- ගස් හා බෝග ----------------
-  PickListDef(PL.treeCountSpecies, 'ගස් වර්ග (ගණනය කරන)', [
-    PickOption('coconut', 'පොල්'),
-    PickOption('jak', 'කොස්'),
-    PickOption('breadfruit', 'දෙල්'),
-    PickOption('mango', 'අඹ'),
-    PickOption('arecanut', 'පුවක්'),
-    PickOption('kitul', 'කිතුල්'),
-    PickOption('palmyrah', 'තල්'),
-    PickOption('banana', 'කෙසෙල් (පඳුරු)'),
-    PickOption('pepper', 'ගම්මිරිස් (වැල්)'),
-    PickOption('rambutan', 'රඹුටන්'),
-    PickOption('durian', 'දූරියන්'),
-    PickOption('mangosteen', 'මැංගුස්'),
-    PickOption('orange', 'දොඩම්'),
-    PickOption('lime', 'දෙහි'),
-    PickOption('papaya', 'පැපොල්'),
-    PickOption('guava', 'පේර'),
-    PickOption('rose_apple', 'ජම්බු'),
-    PickOption('clove', 'කරාබු නැටි'),
-    PickOption('nutmeg', 'සාදික්කා'),
-    PickOption('coffee', 'කෝපි'),
-    PickOption('cocoa', 'කොකෝවා'),
-    PickOption('rubber', 'රබර්'),
-    PickOption('goraka', 'ගොරකා'),
-    PickOption('avocado', 'අලිගැටපේර'),
-    PickOption('other', 'වෙනත්'),
-  ]),
-  PickListDef(PL.treeSingleSpecies, 'දැව / වටිනා ගස් (තනි තනිව)', [
-    PickOption('teak', 'තේක්ක'),
-    PickOption('mahogany', 'මහෝගනී'),
-    PickOption('jak_timber', 'කොස් (දැව)'),
-    PickOption('halmilla', 'හල්මිල්ල'),
-    PickOption('ebony', 'කළුවර'),
-    PickOption('nadun', 'නැදුන්'),
-    PickOption('burutha', 'බුරුත'),
-    PickOption('kumbuk', 'කුඹුක්'),
-    PickOption('hora', 'හොර'),
-    PickOption('albizia', 'ඇල්බීසියා'),
-    PickOption('eucalyptus', 'යුකැලිප්ටස්'),
-    PickOption('bo', 'බෝ'),
-    PickOption('banyan', 'නුග'),
-    PickOption('other', 'වෙනත්'),
-  ]),
-  PickListDef(PL.treeCondition, 'ගසේ තත්ත්වය', [
-    PickOption('healthy', 'නිරෝගී'),
-    PickOption('diseased', 'රෝගී'),
-    PickOption('dying', 'මැරෙමින්'),
-    PickOption('dead', 'මැරී ඇත'),
-  ], editable: false),
-  PickListDef(PL.crop, 'බෝග', [
-    PickOption('tea', 'තේ'),
-    PickOption('paddy', 'වී'),
-    PickOption('vegetables', 'එළවළු'),
-    PickOption('cinnamon', 'කුරුඳු'),
-    PickOption('maize', 'බඩඉරිඟු'),
-    PickOption('finger_millet', 'කුරක්කන්'),
-    PickOption('yams', 'අල වර්ග'),
-    PickOption('groundnut', 'රටකජු'),
-    PickOption('green_gram', 'මුං ඇට'),
-    PickOption('cowpea', 'කවුපි'),
-    PickOption('chilli', 'මිරිස්'),
-    PickOption('onion', 'ළූණු'),
-    PickOption('ginger', 'ඉඟුරු'),
-    PickOption('turmeric', 'කහ'),
-    PickOption('pineapple', 'අන්නාසි'),
-    PickOption('fodder', 'තණකොළ'),
-    PickOption('other', 'වෙනත්'),
-  ]),
-  PickListDef(PL.cropUnit, 'ඒකකය', [
-    PickOption('perch', 'පර්චස්'),
-    PickOption('acre', 'අක්කර'),
-    PickOption('hectare', 'හෙක්ටයාර'),
-    PickOption('plants', 'පැළ ගණන'),
-  ], editable: false),
-  PickListDef(PL.season, 'කන්නය', [
-    PickOption('yala', 'යල'),
-    PickOption('maha', 'මහ'),
-    PickOption('both', 'යල හා මහ'),
-    PickOption('perennial', 'බහු වාර්ෂික'),
-  ], editable: false),
-  PickListDef(PL.irrigation, 'ජල සම්පාදනය', [
-    PickOption('rain', 'වැසි'),
-    PickOption('irrigated', 'වාරි'),
-    PickOption('well', 'ළිං'),
-    PickOption('other', 'වෙනත්'),
-  ]),
-  PickListDef(PL.cultivator, 'වගා කරන්නා', [
-    PickOption('owner', 'අයිතිකරු'),
-    PickOption('tenant_farmer', 'අඳ ගොවියා'),
-    PickOption('lessee', 'බදුකරු'),
-    PickOption('other', 'වෙනත්'),
+  PickListDef(PL.personStatus, Tri('පදිංචි තත්ත්වය', 'Residence status', 'வசிப்பு நிலை'), [
+    PickOption('resident', 'පදිංචිව සිටී', 'Resident', 'வசிக்கிறார்'),
+    PickOption('away', 'තාවකාලිකව නැත (විදේශ / රැකියා)', 'Temporarily away (abroad / work)',
+        'தற்காலிகமாக இல்லை (வெளிநாடு / வேலை)'),
+    PickOption('moved', 'පදිංචිය හැර ගොස්', 'Moved away', 'குடிபெயர்ந்தார்'),
+    PickOption('dead', 'මියගොස්', 'Deceased', 'இறந்தவர்'),
   ], editable: false),
 
-  // ---------------- සතුන් ----------------
-  PickListDef(PL.animal, 'සත්ව වර්ගය', [
-    PickOption('cattle', 'ගවයින්'),
-    PickOption('buffalo', 'මී හරකුන්'),
-    PickOption('goat', 'එළුවන්'),
-    PickOption('sheep', 'බැටළුවන්'),
-    PickOption('pig', 'ඌරන්'),
-    PickOption('layer', 'කුකුළන් (බිත්තර)'),
-    PickOption('broiler', 'කුකුළන් (මස්)'),
-    PickOption('village_chicken', 'ගම් කුකුළන්'),
-    PickOption('duck', 'තාරාවන්'),
-    PickOption('turkey', 'ටර්කි'),
-    PickOption('quail', 'වටුවන්'),
-    PickOption('dog', 'සුනඛයින්'),
-    PickOption('cat', 'බළලුන්'),
-    PickOption('rabbit', 'හාවුන්'),
-    PickOption('bee_box', 'මී මැසි පෙට්ටි'),
-    PickOption('fish_pond', 'මත්ස්‍ය පොකුණු'),
-    PickOption('other', 'වෙනත්'),
+  // ---------------- ගස් හා බෝග / Trees & crops / மரங்கள் & பயிர்கள் ----------------
+  PickListDef(PL.treeCountSpecies, Tri('ගස් වර්ග (ගණනය කරන)', 'Tree species (counted)', 'மர வகைகள் (எண்ணப்படுபவை)'), [
+    PickOption('coconut', 'පොල්', 'Coconut', 'தென்னை'),
+    PickOption('jak', 'කොස්', 'Jak', 'பலா'),
+    PickOption('breadfruit', 'දෙල්', 'Breadfruit', 'ஈரப்பலா'),
+    PickOption('mango', 'අඹ', 'Mango', 'மா'),
+    PickOption('arecanut', 'පුවක්', 'Arecanut', 'பாக்கு'),
+    PickOption('kitul', 'කිතුල්', 'Kitul', 'கித்துள்'),
+    PickOption('palmyrah', 'තල්', 'Palmyrah', 'பனை'),
+    PickOption('banana', 'කෙසෙල් (පඳුරු)', 'Banana (clumps)', 'வாழை (குற்றிகள்)'),
+    PickOption('pepper', 'ගම්මිරිස් (වැල්)', 'Pepper (vines)', 'மிளகு (கொடிகள்)'),
+    PickOption('rambutan', 'රඹුටන්', 'Rambutan', 'ரம்புட்டான்'),
+    PickOption('durian', 'දූරියන්', 'Durian', 'டுரியன்'),
+    PickOption('mangosteen', 'මැංගුස්', 'Mangosteen', 'மங்குஸ்தான்'),
+    PickOption('orange', 'දොඩම්', 'Orange', 'தோடை'),
+    PickOption('lime', 'දෙහි', 'Lime', 'தேசி'),
+    PickOption('papaya', 'පැපොල්', 'Papaya', 'பப்பாசி'),
+    PickOption('guava', 'පේර', 'Guava', 'கொய்யா'),
+    PickOption('rose_apple', 'ජම්බු', 'Rose apple (jambu)', 'ஜம்பு'),
+    PickOption('clove', 'කරාබු නැටි', 'Clove', 'கராம்பு'),
+    PickOption('nutmeg', 'සාදික්කා', 'Nutmeg', 'சாதிக்காய்'),
+    PickOption('coffee', 'කෝපි', 'Coffee', 'கோப்பி'),
+    PickOption('cocoa', 'කොකෝවා', 'Cocoa', 'கொக்கோ'),
+    PickOption('rubber', 'රබර්', 'Rubber', 'இறப்பர்'),
+    PickOption('goraka', 'ගොරකා', 'Goraka', 'கொறுக்காய்'),
+    PickOption('avocado', 'අලිගැටපේර', 'Avocado', 'அவகாடோ (பட்டர் பழம்)'),
+    _other,
   ]),
-  PickListDef(PL.animalPurpose, 'අරමුණ', [
-    PickOption('milk', 'කිරි'),
-    PickOption('meat', 'මස්'),
-    PickOption('eggs', 'බිත්තර'),
-    PickOption('work', 'වැඩ'),
-    PickOption('pet', 'සුරතල්'),
-    PickOption('breeding', 'අභිජනනය'),
-    PickOption('other', 'වෙනත්'),
+  PickListDef(PL.treeSingleSpecies,
+      Tri('දැව / වටිනා ගස් (තනි තනිව)', 'Timber / valuable trees (one by one)', 'வெட்டு / பெறுமதியான மரங்கள் (தனித்தனியாக)'), [
+    PickOption('teak', 'තේක්ක', 'Teak', 'தேக்கு'),
+    PickOption('mahogany', 'මහෝගනී', 'Mahogany', 'மஹோகனி'),
+    PickOption('jak_timber', 'කොස් (දැව)', 'Jak (timber)', 'பலா (வெட்டு மரம்)'),
+    PickOption('halmilla', 'හල්මිල්ල', 'Halmilla', 'ஹல்மில்லா'),
+    PickOption('ebony', 'කළුවර', 'Ebony', 'கருங்காலி'),
+    PickOption('nadun', 'නැදුන්', 'Nadun', 'நாதுன்'),
+    PickOption('burutha', 'බුරුත', 'Satinwood (burutha)', 'முதிரை'),
+    PickOption('kumbuk', 'කුඹුක්', 'Kumbuk', 'மருது'),
+    PickOption('hora', 'හොර', 'Hora', 'ஹோரா'),
+    PickOption('albizia', 'ඇල්බීසියා', 'Albizia', 'அல்பீசியா'),
+    PickOption('eucalyptus', 'යුකැලිප්ටස්', 'Eucalyptus', 'யூகலிப்டஸ்'),
+    PickOption('bo', 'බෝ', 'Bo tree', 'அரச மரம்'),
+    PickOption('banyan', 'නුග', 'Banyan', 'ஆலமரம்'),
+    _other,
   ]),
-  PickListDef(PL.animalHousing, 'රඳවන ආකාරය', [
-    PickOption('shed', 'මඩුව / කූඩුව'),
-    PickOption('free', 'නිදහසේ'),
-    PickOption('tethered', 'බැඳ'),
-    PickOption('other', 'වෙනත්'),
+  PickListDef(PL.treeCondition, Tri('ගසේ තත්ත්වය', 'Tree condition', 'மரத்தின் நிலைமை'), [
+    PickOption('healthy', 'නිරෝගී', 'Healthy', 'ஆரோக்கியமானது'),
+    PickOption('diseased', 'රෝගී', 'Diseased', 'நோயுற்றது'),
+    PickOption('dying', 'මැරෙමින්', 'Dying', 'பட்டுப்போகிறது'),
+    PickOption('dead', 'මැරී ඇත', 'Dead', 'பட்டுப்போனது'),
+  ], editable: false),
+  PickListDef(PL.crop, Tri('බෝග', 'Crop', 'பயிர்'), [
+    PickOption('tea', 'තේ', 'Tea', 'தேயிலை'),
+    PickOption('paddy', 'වී', 'Paddy', 'நெல்'),
+    PickOption('vegetables', 'එළවළු', 'Vegetables', 'மரக்கறி'),
+    PickOption('cinnamon', 'කුරුඳු', 'Cinnamon', 'கறுவா'),
+    PickOption('maize', 'බඩඉරිඟු', 'Maize', 'சோளம்'),
+    PickOption('finger_millet', 'කුරක්කන්', 'Finger millet (kurakkan)', 'குரக்கன்'),
+    PickOption('yams', 'අල වර්ග', 'Yams / tubers', 'கிழங்கு வகைகள்'),
+    PickOption('groundnut', 'රටකජු', 'Groundnut', 'நிலக்கடலை (கச்சான்)'),
+    PickOption('green_gram', 'මුං ඇට', 'Green gram', 'பயறு'),
+    PickOption('cowpea', 'කවුපි', 'Cowpea', 'கௌபி'),
+    PickOption('chilli', 'මිරිස්', 'Chilli', 'மிளகாய்'),
+    PickOption('onion', 'ළූණු', 'Onion', 'வெங்காயம்'),
+    PickOption('ginger', 'ඉඟුරු', 'Ginger', 'இஞ்சி'),
+    PickOption('turmeric', 'කහ', 'Turmeric', 'மஞ்சள்'),
+    PickOption('pineapple', 'අන්නාසි', 'Pineapple', 'அன்னாசி'),
+    PickOption('fodder', 'තණකොළ', 'Fodder grass', 'தீவனப் புல்'),
+    _other,
+  ]),
+  PickListDef(PL.cropUnit, Tri('ඒකකය', 'Unit', 'அலகு'), [
+    PickOption('perch', 'පර්චස්', 'Perches', 'பேர்ச்'),
+    PickOption('acre', 'අක්කර', 'Acres', 'ஏக்கர்'),
+    PickOption('hectare', 'හෙක්ටයාර', 'Hectares', 'ஹெக்டேயர்'),
+    PickOption('plants', 'පැළ ගණන', 'Number of plants', 'கன்றுகளின் எண்ணிக்கை'),
+  ], editable: false),
+  PickListDef(PL.season, Tri('කන්නය', 'Season', 'போகம்'), [
+    PickOption('yala', 'යල', 'Yala', 'சிறுபோகம்'),
+    PickOption('maha', 'මහ', 'Maha', 'பெரும்போகம்'),
+    PickOption('both', 'යල හා මහ', 'Yala & Maha', 'சிறுபோகமும் பெரும்போகமும்'),
+    PickOption('perennial', 'බහු වාර්ෂික', 'Perennial', 'பல்லாண்டு'),
+  ], editable: false),
+  PickListDef(PL.irrigation, Tri('ජල සම්පාදනය', 'Water supply', 'நீர் வழங்கல்'), [
+    PickOption('rain', 'වැසි', 'Rain-fed', 'மழை நீர்'),
+    PickOption('irrigated', 'වාරි', 'Irrigated', 'நீர்ப்பாசனம்'),
+    PickOption('well', 'ළිං', 'Well', 'கிணறு'),
+    _other,
+  ]),
+  PickListDef(PL.cultivator, Tri('වගා කරන්නා', 'Cultivated by', 'பயிர்செய்பவர்'), [
+    PickOption('owner', 'අයිතිකරු', 'Owner', 'உரிமையாளர்'),
+    PickOption('tenant_farmer', 'අඳ ගොවියා', 'Tenant cultivator (ande)', 'குத்தகைப் பயிர்ச்செய்கையாளர்'),
+    PickOption('lessee', 'බදුකරු', 'Lessee', 'குத்தகைதாரர்'),
+    _other,
+  ], editable: false),
+
+  // ---------------- සතුන් / Animals / விலங்குகள் ----------------
+  PickListDef(PL.animal, Tri('සත්ව වර්ගය', 'Animal type', 'விலங்கு வகை'), [
+    PickOption('cattle', 'ගවයින්', 'Cattle', 'மாடுகள்'),
+    PickOption('buffalo', 'මී හරකුන්', 'Buffaloes', 'எருமைகள்'),
+    PickOption('goat', 'එළුවන්', 'Goats', 'ஆடுகள்'),
+    PickOption('sheep', 'බැටළුවන්', 'Sheep', 'செம்மறியாடுகள்'),
+    PickOption('pig', 'ඌරන්', 'Pigs', 'பன்றிகள்'),
+    PickOption('layer', 'කුකුළන් (බිත්තර)', 'Chickens (layers)', 'கோழிகள் (முட்டை)'),
+    PickOption('broiler', 'කුකුළන් (මස්)', 'Chickens (broilers)', 'கோழிகள் (இறைச்சி)'),
+    PickOption('village_chicken', 'ගම් කුකුළන්', 'Village chickens', 'நாட்டுக் கோழிகள்'),
+    PickOption('duck', 'තාරාවන්', 'Ducks', 'தாராக்கள்'),
+    PickOption('turkey', 'ටර්කි', 'Turkeys', 'வான்கோழிகள்'),
+    PickOption('quail', 'වටුවන්', 'Quails', 'காடைகள்'),
+    PickOption('dog', 'සුනඛයින්', 'Dogs', 'நாய்கள்'),
+    PickOption('cat', 'බළලුන්', 'Cats', 'பூனைகள்'),
+    PickOption('rabbit', 'හාවුන්', 'Rabbits', 'முயல்கள்'),
+    PickOption('bee_box', 'මී මැසි පෙට්ටි', 'Bee boxes', 'தேனீப் பெட்டிகள்'),
+    PickOption('fish_pond', 'මත්ස්‍ය පොකුණු', 'Fish ponds', 'மீன் குளங்கள்'),
+    _other,
+  ]),
+  PickListDef(PL.animalPurpose, Tri('අරමුණ', 'Purpose', 'நோக்கம்'), [
+    PickOption('milk', 'කිරි', 'Milk', 'பால்'),
+    PickOption('meat', 'මස්', 'Meat', 'இறைச்சி'),
+    PickOption('eggs', 'බිත්තර', 'Eggs', 'முட்டை'),
+    PickOption('work', 'වැඩ', 'Draught work', 'வேலை'),
+    PickOption('pet', 'සුරතල්', 'Pet', 'செல்லப்பிராணி'),
+    PickOption('breeding', 'අභිජනනය', 'Breeding', 'இனப்பெருக்கம்'),
+    _other,
+  ]),
+  PickListDef(PL.animalHousing, Tri('රඳවන ආකාරය', 'Housing', 'வளர்க்கும் முறை'), [
+    PickOption('shed', 'මඩුව / කූඩුව', 'Shed / coop', 'கொட்டில் / கூடு'),
+    PickOption('free', 'නිදහසේ', 'Free-range', 'சுதந்திரமாக'),
+    PickOption('tethered', 'බැඳ', 'Tethered', 'கட்டி வைத்து'),
+    _other,
   ], editable: false),
 ];
 
@@ -506,11 +555,11 @@ class PickRegistry {
   List<PickOption> options(String list) => [
         ..._defs[list]!.options,
         for (final c in _custom)
-          if (c.listName == list && c.active) PickOption(c.code, c.label),
+          if (c.listName == list && c.active) PickOption.custom(c.code, c.label),
       ];
 
-  /// Label for a stored code. Unknown codes (e.g. a hidden custom option)
-  /// still resolve, so old data keeps displaying correctly.
+  /// Label for a stored code in the current language. Unknown codes (e.g. a
+  /// hidden custom option) still resolve, so old data keeps displaying.
   String label(String list, String? code) {
     if (code == null || code.isEmpty) return '—';
     for (final o in _defs[list]!.options) {

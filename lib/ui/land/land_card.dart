@@ -11,6 +11,7 @@ import '../widgets/brand.dart';
 import '../widgets/common.dart';
 import 'land_sections.dart';
 import 'land_wizard.dart';
+import '../../l10n/l10n.dart';
 
 /// Everything about one land on one screen, with tabs.
 class LandCard extends StatelessWidget {
@@ -21,20 +22,21 @@ class LandCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final db = AppState.db;
+    final t = context.l10n;
     return StreamBuilder<LandBundle?>(
       stream: db.watchBundle(landId),
       builder: (context, snap) {
         if (!snap.hasData) {
           return BrandPage(
-            title: 'ඉඩම',
+            title: t.land,
             body: snap.connectionState == ConnectionState.waiting
                 ? const Center(child: CircularProgressIndicator())
-                : const EmptyHint('ඉඩම හමු නොවීය'),
+                : EmptyHint(t.landNotFound),
           );
         }
         final b = snap.data!;
         if (b.land.deletedAt != null) {
-          return const BrandPage(title: 'ඉඩම', body: EmptyHint('මෙම ඉඩම ඉවත් කර ඇත'));
+          return BrandPage(title: t.land, body: EmptyHint(t.landRemoved));
         }
         final check = checkLand(b);
         return DefaultTabController(
@@ -57,26 +59,22 @@ class LandCard extends StatelessWidget {
                 ].whereType<String>().join('  •  '),
                 actions: [
                   HeaderAction(Icons.checklist_rounded, () => push(context, LandWizard(landId: landId)),
-                      tooltip: 'පියවරෙන් පියවර'),
+                      tooltip: t.stepByStep),
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
                     onSelected: (val) async {
                       if (val == 'edit') {
                         push(context, LandForm(land: b.land));
                       } else if (val == 'delete') {
-                        if (await confirm(
-                            context,
-                            'මෙම ඉඩම සහ එහි ගොඩනැගිලි, පවුල්, ගස්, සතුන් සියල්ල ඉවත් කරන්නද?\n'
-                            '(වැරදීමකින් ඇතුළත් කළා නම් පමණි. ඉතිහාසයේ රැඳේ.)',
-                            danger: true)) {
+                        if (await confirm(context, t.landDeleteConfirm, danger: true)) {
                           await db.deleteLandCascade(landId);
                           if (context.mounted) Navigator.pop(context);
                         }
                       }
                     },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'edit', child: Text('ඉඩම සංස්කරණය')),
-                      PopupMenuItem(value: 'delete', child: Text('ඉඩම ඉවත් කරන්න')),
+                    itemBuilder: (_) => [
+                      PopupMenuItem(value: 'edit', child: Text(t.landEdit)),
+                      PopupMenuItem(value: 'delete', child: Text(t.landDelete)),
                     ],
                   ),
                 ],
@@ -84,32 +82,33 @@ class LandCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Wrap(spacing: 8, runSpacing: 6, children: [
-                      _HeaderPill(Icons.donut_large_rounded, '${check.percent}% සම්පූර්ණයි'),
+                      _HeaderPill(Icons.donut_large_rounded, t.percentComplete(check.percent)),
                       _HeaderPill(
                         b.land.status == 'verified' ? Icons.verified_rounded : Icons.circle,
-                        statusLabels[b.land.status] ?? '',
+                        t.landStatus(b.land.status),
                         color: statusColor(b.land.status),
                       ),
                       if (b.ownerNames.isNotEmpty) _HeaderPill(Icons.person_rounded, b.ownerNames.first),
                     ]),
                     const SizedBox(height: 6),
-                    const TabBar(
+                    TabBar(
                       isScrollable: true,
                       tabAlignment: TabAlignment.start,
                       padding: EdgeInsets.zero,
-                      labelPadding: EdgeInsets.symmetric(horizontal: 12),
+                      labelPadding: const EdgeInsets.symmetric(horizontal: 12),
                       indicatorWeight: 3,
                       indicatorSize: TabBarIndicatorSize.label,
-                      labelStyle: TextStyle(fontFamily: fontFamily, fontSize: 16, fontWeight: FontWeight.w800),
-                      unselectedLabelStyle: TextStyle(fontFamily: fontFamily, fontSize: 16),
+                      labelStyle: TextStyle(
+                          fontFamily: fontFamilyFor(L10n.lang.value), fontSize: 16, fontWeight: FontWeight.w800),
+                      unselectedLabelStyle: TextStyle(fontFamily: fontFamilyFor(L10n.lang.value), fontSize: 16),
                       tabs: [
-                        Tab(text: 'සාරාංශය'),
-                        Tab(text: 'ගොඩනැගිලි'),
-                        Tab(text: 'මිනිසුන්'),
-                        Tab(text: 'ගස් හා බෝග'),
-                        Tab(text: 'සතුන්'),
-                        Tab(text: 'ඡායාරූප'),
-                        Tab(text: 'ඉතිහාසය'),
+                        Tab(text: t.summary),
+                        Tab(text: t.buildings),
+                        Tab(text: t.people),
+                        Tab(text: t.treesAndCrops),
+                        Tab(text: t.animals),
+                        Tab(text: t.photos),
+                        Tab(text: t.history),
                       ],
                     ),
                   ],

@@ -1,0 +1,5 @@
+/* iOS permission prompts — English */
+"NSLocationWhenInUseUsageDescription" = "Uses GPS to record the location of lands, buildings and trees.";
+"NSCameraUsageDescription" = "Uses the camera to take photos of houses, lands and trees.";
+"NSPhotoLibraryUsageDescription" = "To choose existing photos.";
+"NSFaceIDUsageDescription" = "To open SmartGrama securely.";

@@ -9,6 +9,7 @@ import '../../data/units.dart';
 import '../widgets/common.dart';
 import '../widgets/fields.dart';
 import '../widgets/brand.dart';
+import '../../l10n/l10n.dart';
 
 enum ExtentMode { arp, perches, hectares }
 
@@ -122,25 +123,25 @@ class _LandFormState extends State<LandForm> {
   }
 
   Future<void> _save() async {
+    final t = context.l10n;
     if (txt(_name) == null) {
-      snack(context, 'ඉඩමේ නම අනිවාර්යයි');
+      snack(context, t.landNameRequired);
       return;
     }
     if (_groupId == null) {
-      snack(context, 'ගෘහ කණ්ඩායම තෝරන්න');
+      snack(context, t.selectHouseGroup);
       return;
     }
     final extent = _extent;
     if (extent != null && extent <= 0) {
-      snack(context, 'ඉඩමේ ප්‍රමාණය වලංගු නැත');
+      snack(context, t.extentInvalid);
       return;
     }
     final oddArp = _mode == ExtentMode.arp &&
         ((dblOf(_roods) ?? 0) >= 4 ||
             ((dblOf(_perches) ?? 0) >= 40 && (txt(_acres) != null || txt(_roods) != null)));
     if (oddArp) {
-      final ok = await confirm(context,
-          'රූඩ් 4 කට හෝ පර්චස් 40 කට වැඩි අගයක් ඇත. මුළු ප්‍රමාණය ${formatExtent(extent)} ලෙස සුරකින්නද?');
+      final ok = await confirm(context, t.arpOddConfirm(formatExtent(extent)));
       if (!ok) return;
     }
     if (extent != null && _extentSource == null) {
@@ -154,8 +155,7 @@ class _LandFormState extends State<LandForm> {
               ..where((x) => x.deedNo.equals(txt(_deed)!) & x.deletedAt.isNull() & x.id.equals(id).not()))
             .get();
     if (dup.isNotEmpty && mounted) {
-      final ok = await confirm(context,
-          'ඔප්පු අංකය "${txt(_deed)}" දැනටමත් "${dup.first.name}" ඉඩමට ඇත. තවමත් සුරකින්නද?');
+      final ok = await confirm(context, t.deedDupConfirm(txt(_deed)!, dup.first.name));
       if (!ok) {
         setState(() => _busy = false);
         return;
@@ -201,8 +201,9 @@ class _LandFormState extends State<LandForm> {
     final group = s?.groupById[_groupId];
     final village = s?.villageById[group?.villageId];
     final extent = _extent;
+    final t = context.l10n;
     return Scaffold(
-      appBar: BrandAppBar(title: Text(l == null ? 'නව ඉඩමක්' : 'ඉඩම සංස්කරණය')),
+      appBar: BrandAppBar(title: Text(l == null ? t.landNew : t.landEdit)),
       bottomNavigationBar: SaveBar(onSave: _save, busy: _busy || s == null),
       body: s == null
           ? const Center(child: CircularProgressIndicator())
@@ -212,14 +213,14 @@ class _LandFormState extends State<LandForm> {
                 InkWell(
                   onTap: _pickGroup,
                   child: InputDecorator(
-                    decoration: const InputDecoration(
-                        labelText: 'ගම්මානය / ගෘහ කණ්ඩායම *', suffixIcon: Icon(Icons.arrow_drop_down)),
+                    decoration: InputDecoration(
+                        labelText: t.villageGroupField, suffixIcon: const Icon(Icons.arrow_drop_down)),
                     child: Text(group == null ? '' : '${village?.name ?? ''} — ${group.code}'),
                   ),
                 ),
                 const SizedBox(height: 6),
-                TF(_name, 'ඉඩමේ නම *', hint: 'උදා: කොස්වත්ත'),
-                TF(_address, 'ලිපිනය / ස්ථාන විස්තරය', maxLines: 2),
+                TF(_name, t.landNameField, hint: t.landNameHint),
+                TF(_address, t.addressField, maxLines: 2),
                 GpsField(
                   lat: _lat,
                   lng: _lng,
@@ -230,12 +231,12 @@ class _LandFormState extends State<LandForm> {
                     _acc = c;
                   }),
                 ),
-                const SectionTitle('ප්‍රමාණය'),
+                SectionTitle(t.fExtent),
                 SegmentedButton<ExtentMode>(
-                  segments: const [
-                    ButtonSegment(value: ExtentMode.arp, label: Text('අක්-රූ-පර්')),
-                    ButtonSegment(value: ExtentMode.perches, label: Text('පර්චස්')),
-                    ButtonSegment(value: ExtentMode.hectares, label: Text('හෙක්ටයාර')),
+                  segments: [
+                    ButtonSegment(value: ExtentMode.arp, label: Text(t.unitArp)),
+                    ButtonSegment(value: ExtentMode.perches, label: Text(t.unitPerches)),
+                    ButtonSegment(value: ExtentMode.hectares, label: Text(t.unitHectares)),
                   ],
                   selected: {_mode},
                   onSelectionChanged: (v) => setState(() {
@@ -251,14 +252,14 @@ class _LandFormState extends State<LandForm> {
                 const SizedBox(height: 8),
                 if (_mode == ExtentMode.arp)
                   Row(children: [
-                    Expanded(child: TF(_acres, 'අක්කර', decimal: true, onChanged: (_) => setState(() {}))),
+                    Expanded(child: TF(_acres, t.unitAcres, decimal: true, onChanged: (_) => setState(() {}))),
                     const SizedBox(width: 8),
-                    Expanded(child: TF(_roods, 'රූඩ්', decimal: true, onChanged: (_) => setState(() {}))),
+                    Expanded(child: TF(_roods, t.unitRoods, decimal: true, onChanged: (_) => setState(() {}))),
                     const SizedBox(width: 8),
-                    Expanded(child: TF(_perches, 'පර්චස්', decimal: true, onChanged: (_) => setState(() {}))),
+                    Expanded(child: TF(_perches, t.unitPerches, decimal: true, onChanged: (_) => setState(() {}))),
                   ])
                 else
-                  TF(_single, _mode == ExtentMode.perches ? 'පර්චස්' : 'හෙක්ටයාර',
+                  TF(_single, _mode == ExtentMode.perches ? t.unitPerches : t.unitHectares,
                       decimal: true, onChanged: (_) => setState(() {})),
                 if (extent != null)
                   Text('= ${formatExtent(extent)} = ${formatHectares(extent)}',
@@ -267,43 +268,42 @@ class _LandFormState extends State<LandForm> {
                     list: PL.extentSource,
                     value: _extentSource,
                     onChanged: (v) => setState(() => _extentSource = v)),
-                const SectionTitle('අයිතිය'),
+                SectionTitle(t.fOwnership),
                 PickField(
                     list: PL.ownership,
                     value: _ownership,
                     onChanged: (v) => setState(() => _ownership = v)),
                 Row(children: [
-                  Expanded(child: TF(_deed, 'ඔප්පු / බලපත්‍ර අංකය')),
+                  Expanded(child: TF(_deed, t.fDeedPermitNo)),
                   const SizedBox(width: 8),
-                  Expanded(child: TF(_plan, 'පිඹුරු අංකය')),
+                  Expanded(child: TF(_plan, t.fPlanNo)),
                 ]),
                 Row(children: [
-                  Expanded(child: TF(_lot, 'කට්ටි අංකය')),
+                  Expanded(child: TF(_lot, t.fLotNo)),
                   const SizedBox(width: 8),
-                  Expanded(child: TF(_scheme, 'ජනපදය')),
+                  Expanded(child: TF(_scheme, t.fScheme)),
                 ]),
                 PickField(
                     list: PL.yesNoUnknown,
-                    label: 'අතුරු බෙදීම්වලට අවසර',
+                    label: t.subdivisionAllowed,
                     value: _subdivision,
                     onChanged: (v) => setState(() => _subdivision = v)),
-                const Text('අයිතිකරුවන් හා පදිංචිකරුවන් ඉඩම සුරැකීමෙන් පසු "මිනිසුන්" කොටසින් එකතු කරන්න.',
-                    style: TextStyle(fontSize: 12)),
-                const SectionTitle('මායිම්'),
-                TF(_n, 'උතුර'),
-                TF(_e, 'නැගෙනහිර'),
-                TF(_so, 'දකුණ'),
-                TF(_w, 'බටහිර'),
-                const SectionTitle('භාවිතය'),
+                Text(t.ownersAddLater(t.people), style: const TextStyle(fontSize: 12)),
+                SectionTitle(t.boundaries),
+                TF(_n, t.fNorth),
+                TF(_e, t.fEast),
+                TF(_so, t.fSouth),
+                TF(_w, t.fWest),
+                SectionTitle(t.fUse),
                 PickField(list: PL.landUse, value: _landUse, onChanged: (v) => setState(() => _landUse = v)),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('ආරවුලක් ඇත'),
+                  title: Text(t.hasDispute),
                   value: _dispute,
                   onChanged: (v) => setState(() => _dispute = v),
                 ),
-                if (_dispute) TF(_disputeNote, 'ආරවුල පිළිබඳ සටහන', maxLines: 2),
-                TF(_notes, 'වෙනත් සටහන්', maxLines: 3),
+                if (_dispute) TF(_disputeNote, t.disputeNote, maxLines: 2),
+                TF(_notes, t.otherNotes, maxLines: 3),
               ],
             ),
     );

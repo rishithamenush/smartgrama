@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../app_state.dart';
+import '../l10n/l10n.dart';
 import 'database.dart';
 
 class GpsFix {
@@ -21,12 +22,12 @@ class DeviceError implements Exception {
 
 Future<void> _ensureLocationPermission() async {
   if (!await Geolocator.isLocationServiceEnabled()) {
-    throw DeviceError('දුරකථනයේ Location (GPS) සක්‍රිය කරන්න');
+    throw DeviceError(L10n.current.gpsServiceOff);
   }
   var perm = await Geolocator.checkPermission();
   if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
   if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
-    throw DeviceError('ස්ථානය ලබා ගැනීමට අවසර නැත — Settings වලින් අවසර දෙන්න');
+    throw DeviceError(L10n.current.gpsDenied);
   }
 }
 
@@ -43,7 +44,7 @@ Future<GpsFix> captureGps() async {
     );
     return GpsFix(p.latitude, p.longitude, p.accuracy);
   } catch (_) {
-    throw DeviceError('GPS ලබා ගැනීමට නොහැකි විය — එළිමහනට ගොස් නැවත උත්සාහ කරන්න');
+    throw DeviceError(L10n.current.gpsFailed);
   }
 }
 

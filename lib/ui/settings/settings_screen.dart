@@ -18,6 +18,7 @@ import '../../data/picklists.dart';
 import '../../security/key_store.dart';
 import '../../security/pin_screen.dart';
 import '../land/land_sections.dart';
+import '../setup/language_screen.dart';
 import '../setup/setup_screen.dart';
 import '../setup/structure_screen.dart';
 import '../widgets/common.dart';
@@ -25,6 +26,7 @@ import '../widgets/fields.dart';
 import '../widgets/brand.dart';
 import '../widgets/art.dart';
 import '../../theme.dart';
+import '../../l10n/l10n.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -60,35 +62,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return showDialog<String>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('උපස්ථ මුරපදය'),
+        title: Text(c.l10n.backupPassword),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (confirmTwice)
-              const Text('මෙම මුරපදය නැතිව උපස්ථය විවෘත කළ නොහැක. ආරක්ෂිතව මතක තබා ගන්න.',
-                  style: TextStyle(fontSize: 13)),
-            TextField(controller: a, obscureText: true, decoration: const InputDecoration(labelText: 'මුරපදය')),
+            if (confirmTwice) Text(c.l10n.backupPasswordWarning, style: const TextStyle(fontSize: 13)),
+            TextField(controller: a, obscureText: true, decoration: InputDecoration(labelText: c.l10n.password)),
             if (confirmTwice) ...[
               const SizedBox(height: 8),
-              TextField(controller: b, obscureText: true, decoration: const InputDecoration(labelText: 'නැවත')),
+              TextField(
+                  controller: b, obscureText: true, decoration: InputDecoration(labelText: c.l10n.passwordRepeat)),
             ],
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('අවලංගු')),
+          TextButton(onPressed: () => Navigator.pop(c), child: Text(c.l10n.cancel)),
           FilledButton(
             onPressed: () {
               if (a.text.length < 6) {
-                snack(c, 'අවම අකුරු 6 ක්');
+                snack(c, c.l10n.passwordMin);
                 return;
               }
               if (confirmTwice && a.text != b.text) {
-                snack(c, 'මුරපද නොගැළපේ');
+                snack(c, c.l10n.passwordMismatch);
                 return;
               }
               Navigator.pop(c, a.text);
             },
-            child: const Text('හරි'),
+            child: Text(c.l10n.ok),
           ),
         ],
       ),
@@ -98,6 +99,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _backup() async {
     final pw = await _askPassword(confirmTwice: true);
     if (pw == null || !mounted) return;
+    final shareText = context.l10n.backupShareText;
     setState(() => _busy = true);
     try {
       final dir = await getTemporaryDirectory();
@@ -106,18 +108,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await db.setSetting('last_backup', DateTime.now().toIso8601String());
       await SharePlus.instance.share(ShareParams(
         files: [XFile(f.path)],
-        text: 'SmartGrama සංකේතිත උපස්ථය',
+        text: shareText,
       ));
     } catch (e) {
-      if (mounted) snack(context, 'උපස්ථය අසාර්ථකයි: $e');
+      if (mounted) snack(context, context.l10n.backupFailed('$e'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _restore() async {
-    if (!await confirm(context, 'උපස්ථයෙන් ප්‍රතිස්ථාපනය කළ විට දැනට ඇති සියලු දත්ත ඉවත් වී උපස්ථයේ දත්ත පමණක් රැඳේ. ඉදිරියට යන්නද?',
-        danger: true)) {
+    if (!await confirm(context, context.l10n.restoreConfirm, danger: true)) {
       return;
     }
     final picked = await FilePicker.pickFile();
@@ -128,11 +129,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       await restoreBackup(db, File(picked!.path!), pw, photosDir: AppState.photosDir);
       await AppState.reloadPicks();
-      if (mounted) snack(context, 'ප්‍රතිස්ථාපනය සාර්ථකයි');
+      if (mounted) snack(context, context.l10n.restoreDone);
     } on BackupError catch (e) {
       if (mounted) snack(context, e.message);
     } catch (e) {
-      if (mounted) snack(context, 'ප්‍රතිස්ථාපනය අසාර්ථකයි: $e');
+      if (mounted) snack(context, context.l10n.restoreFailed('$e'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -152,47 +153,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ));
     if (!verified) return;
     await nav.push(MaterialPageRoute(builder: (c) => PinScreen.setup(onDone: () => Navigator.pop(c))));
-    if (mounted) snack(context, 'PIN අංකය වෙනස් කළා');
+    if (mounted) snack(context, context.l10n.pinChanged);
   }
 
+  // Own transparent Material so the ripple shows above the card colour.
   Widget _tile(IconData icon, Color color, String title, {String? subtitle, VoidCallback? onTap, Widget? trailing}) =>
-      ListTile(
+      Material(type: MaterialType.transparency, child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 4),
         leading: IconBadge(icon, color, size: 40),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700, color: Brand.brownDark)),
         subtitle: subtitle == null ? null : Text(subtitle, style: const TextStyle(color: Brand.muted)),
         trailing: trailing ?? (onTap == null ? null : const Icon(Icons.chevron_right_rounded, color: Brand.muted)),
         onTap: onTap,
-      );
+      ));
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     return BrandPage(
-      title: 'සැකසුම්',
-      subtitle: 'වසම, පෙනුම, ආරක්ෂාව, උපස්ථය',
+      title: t.settingsTitle,
+      subtitle: t.settingsSubtitle,
       body: Stack(
         children: [
           ListView(
             padding: const EdgeInsets.only(bottom: 40),
             children: [
               SectionCard(
-                title: 'වසම',
+                title: t.division,
                 icon: Icons.account_balance_rounded,
                 children: [
-                  _tile(Icons.badge_rounded, Brand.brownMid, 'වසම් තොරතුරු',
-                      subtitle: 'අංකය, නම, නිලධාරී', onTap: () async {
+                  _tile(Icons.badge_rounded, Brand.brownMid, t.divisionDetails,
+                      subtitle: t.divisionDetailsSub, onTap: () async {
                     final d = await db.loadDivision();
                     if (mounted) push(this.context, SetupScreen(existing: d));
                   }),
-                  _tile(Icons.holiday_village_rounded, Brand.olive, 'ගම්මාන හා ගෘහ කණ්ඩායම්',
+                  _tile(Icons.holiday_village_rounded, Brand.olive, t.villagesAndGroups,
                       onTap: () => push(context, const StructureScreen())),
-                  _tile(Icons.checklist_rounded, Brand.gold, 'තේරීම් ලැයිස්තු',
-                      subtitle: 'ගස්, සතුන්, බෝග ආදී වර්ග එකතු කිරීම',
-                      onTap: () => push(context, const PickListsScreen())),
+                  _tile(Icons.checklist_rounded, Brand.gold, t.pickLists,
+                      subtitle: t.pickListsSub, onTap: () => push(context, const PickListsScreen())),
                 ],
               ),
               SectionCard(
-                title: 'අකුරු ප්‍රමාණය',
+                title: t.language,
+                icon: Icons.translate_rounded,
+                color: Brand.clay,
+                children: [
+                  for (final l in AppLang.values)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: LanguageTile(
+                        lang: l,
+                        selected: l == L10n.lang.value,
+                        onTap: () => AppState.setLanguage(l),
+                      ),
+                    ),
+                  Text(t.languageDataUnchanged, style: const TextStyle(fontSize: 13, color: Brand.muted)),
+                ],
+              ),
+              SectionCard(
+                title: t.textSize,
                 icon: Icons.format_size_rounded,
                 color: Brand.slate,
                 children: [
@@ -200,10 +219,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     valueListenable: AppState.fontScale,
                     builder: (context, v, _) => SegmentedButton<double>(
                       showSelectedIcon: false,
-                      segments: const [
-                        ButtonSegment(value: 1.0, label: Text('සාමාන්‍ය')),
-                        ButtonSegment(value: 1.15, label: Text('විශාල')),
-                        ButtonSegment(value: 1.3, label: Text('ඉතා විශාල')),
+                      segments: [
+                        ButtonSegment(value: 1.0, label: Text(t.sizeNormal)),
+                        ButtonSegment(value: 1.15, label: Text(t.sizeLarge)),
+                        ButtonSegment(value: 1.3, label: Text(t.sizeXLarge)),
                       ],
                       selected: {v},
                       onSelectionChanged: (s) {
@@ -215,14 +234,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
               SectionCard(
-                title: 'ආරක්ෂාව',
+                title: t.security,
                 icon: Icons.shield_rounded,
                 color: Brand.olive,
                 children: [
-                  _tile(Icons.pin_rounded, Brand.brownMid, 'PIN අංකය වෙනස් කරන්න', onTap: _changePin),
+                  _tile(Icons.pin_rounded, Brand.brownMid, t.changePin, onTap: _changePin),
                   if (_bioAvailable == true)
-                    _tile(Icons.fingerprint_rounded, Brand.slate, 'ඇඟිලි සලකුණ / මුහුණ',
-                        subtitle: 'PIN නැතිව විවෘත කිරීම',
+                    _tile(Icons.fingerprint_rounded, Brand.slate, t.biometric,
+                        subtitle: t.biometricSub,
                         trailing: Switch(
                           value: _bio,
                           onChanged: (v) async {
@@ -231,15 +250,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             setState(() => _bio = v);
                           },
                         )),
-                  _tile(Icons.timer_rounded, Brand.gold, 'ස්වයංක්‍රීය අගුල',
+                  _tile(Icons.timer_rounded, Brand.gold, t.autoLock,
                       trailing: DropdownButton<int>(
                         value: AppState.autoLockMinutes,
                         underline: const SizedBox.shrink(),
-                        items: const [
-                          DropdownMenuItem(value: 0, child: Text('වහාම')),
-                          DropdownMenuItem(value: 2, child: Text('මිනිත්තු 2')),
-                          DropdownMenuItem(value: 5, child: Text('මිනිත්තු 5')),
-                          DropdownMenuItem(value: 15, child: Text('මිනිත්තු 15')),
+                        items: [
+                          DropdownMenuItem(value: 0, child: Text(t.lockImmediately)),
+                          for (final m in const [2, 5, 15]) DropdownMenuItem(value: m, child: Text(t.minutesN(m))),
                         ],
                         onChanged: (v) {
                           if (v == null) return;
@@ -250,7 +267,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
               SectionCard(
-                title: 'උපස්ථය',
+                title: t.backup,
                 icon: Icons.cloud_done_rounded,
                 color: Brand.terracotta,
                 children: [
@@ -261,30 +278,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       return _tile(
                         Icons.backup_rounded,
                         last == null ? Brand.warn : Brand.ok,
-                        'උපස්ථයක් සාදන්න',
-                        subtitle: last == null
-                            ? 'තවම නැත — දුරකථනය නැති වුවහොත් දත්ත අහිමි වේ'
-                            : 'අවසන්: ${dateTimeFmt.format(last)}',
+                        t.createBackup,
+                        subtitle: last == null ? t.noBackupYet : t.lastBackup(dateTimeFmt.format(last)),
                         onTap: _busy ? null : _backup,
                       );
                     },
                   ),
-                  _tile(Icons.settings_backup_restore_rounded, Brand.slate, 'උපස්ථයෙන් ප්‍රතිස්ථාපනය',
+                  _tile(Icons.settings_backup_restore_rounded, Brand.slate, t.restoreFromBackup,
                       onTap: _busy ? null : _restore),
                 ],
               ),
               if (kDebugMode)
                 SectionCard(
-                  title: 'සංවර්ධක (debug)',
+                  title: t.developer,
                   icon: Icons.science_rounded,
                   color: Brand.muted,
                   children: [
-                    _tile(Icons.auto_awesome_rounded, Brand.gold, 'ආදර්ශ දත්ත එකතු කරන්න',
-                        subtitle: 'පරීක්ෂා කිරීමට පමණි', onTap: () async {
+                    _tile(Icons.auto_awesome_rounded, Brand.gold, t.addDemoData,
+                        subtitle: t.testingOnly, onTap: () async {
                       setState(() => _busy = true);
                       await seedDemo(db);
                       if (mounted) setState(() => _busy = false);
-                      if (mounted) snack(this.context, 'ආදර්ශ දත්ත එකතු කළා');
+                      if (mounted) snack(this.context, this.context.l10n.demoDataAdded);
                     }),
                   ],
                 ),
@@ -295,12 +310,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Text('SmartGrama 1.0',
                     style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Brand.brownDark)),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
                 child: Text(
-                  'සියලු දත්ත මෙම දුරකථනයේ සංකේතිතව (encrypted) ගබඩා වේ. අන්තර්ජාලයට යවන්නේ නැත.',
+                  t.privacyNote,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Brand.muted, fontSize: 13),
+                  style: const TextStyle(color: Brand.muted, fontSize: 13),
                 ),
               ),
             ],
@@ -323,13 +338,13 @@ class PickListsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final editable = pickListDefs.where((d) => d.editable).toList();
     return Scaffold(
-      appBar: BrandAppBar(title: const Text('තේරීම් ලැයිස්තු')),
+      appBar: BrandAppBar(title: Text(context.l10n.pickLists)),
       body: ListView(
         children: [
           for (final d in editable)
             ListTile(
               title: Text(d.title),
-              subtitle: Text('${PickRegistry.instance.options(d.name).length} අයිතම'),
+              subtitle: Text(context.l10n.itemsN(PickRegistry.instance.options(d.name).length)),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => push(context, _PickListEditor(def: d)),
             ),
@@ -363,16 +378,22 @@ class _PickListEditor extends StatelessWidget {
             children: [
               for (final o in def.options)
                 ListTile(dense: true, leading: const Icon(Icons.lock_outline, size: 18), title: Text(o.label)),
-              if (custom.isNotEmpty) const SectionTitle('ඔබ එකතු කළ'),
+              if (custom.isNotEmpty) SectionTitle(context.l10n.addedByYou),
               for (final c in custom)
                 SwitchListTile(
                   title: Text(c.label),
-                  subtitle: Text(c.active ? 'පෙන්වයි' : 'සඟවා ඇත'),
+                  subtitle: Text(c.active ? context.l10n.shown : context.l10n.hidden),
                   value: c.active,
                   onChanged: (v) async {
                     await db.saveRow(db.pickItems, c.id, PickItemsCompanion(active: Value(v)));
                     await AppState.reloadPicks();
                   },
+                ),
+              if (def.editable)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
+                  child: Text(context.l10n.customItemsNote,
+                      style: const TextStyle(fontSize: 13, color: Brand.muted)),
                 ),
             ],
           ),

@@ -9,21 +9,13 @@ import '../../data/picklists.dart';
 import '../widgets/common.dart';
 import '../widgets/fields.dart';
 import '../widgets/brand.dart';
+import '../../l10n/l10n.dart';
 
 const _eventForStatus = {
   'moved': 'left',
   'dead': 'death',
   'away': 'away',
   'resident': 'returned',
-};
-
-const residenceEventLabels = {
-  'arrived': 'පදිංචියට පැමිණියා',
-  'left': 'පදිංචිය හැර ගියා',
-  'birth': 'උපත',
-  'death': 'මරණය',
-  'away': 'තාවකාලිකව බැහැරට ගියා',
-  'returned': 'නැවත පැමිණියා',
 };
 
 class PersonForm extends StatefulWidget {
@@ -98,7 +90,7 @@ class _PersonFormState extends State<PersonForm> {
         _nicError = null;
         _dob = r.info!.dob;
         _gender = r.info!.gender;
-        _nicNote = 'උපන් දිනය ${dateFmt.format(_dob!)} • ${pl(PL.gender, _gender)} — හැඳුනුම්පතින්';
+        _nicNote = context.l10n.nicDerived(dateFmt.format(_dob!), pl(PL.gender, _gender));
       } else {
         _nicNote = null;
         _nicError = n.length >= 10 ? r.error : null;
@@ -128,34 +120,35 @@ class _PersonFormState extends State<PersonForm> {
   }
 
   Future<void> _save() async {
+    final t = context.l10n;
     if (txt(_name) == null) {
-      snack(context, 'නම අනිවාර්යයි');
+      snack(context, t.nameRequired);
       return;
     }
     final nic = txt(_nic) == null ? null : normalizeNic(_nic.text);
     if (nic != null) {
       final r = parseNic(nic);
       if (!r.isValid &&
-          !await confirm(context, 'හැඳුනුම්පත් අංකය වලංගු නැත (${r.error}). තවමත් සුරකින්නද?')) {
+          !await confirm(context, t.nicInvalidConfirm(r.error ?? ''))) {
         return;
       }
       if (r.isValid && _dob != null && r.info!.dob != _dob) {
         if (!mounted) return;
-        if (!await confirm(context, 'ඇතුළත් කළ උපන් දිනය හැඳුනුම්පත සමඟ නොගැළපේ. තවමත් සුරකින්නද?')) {
+        if (!await confirm(context, t.dobMismatchConfirm)) {
           return;
         }
       }
       final dups = await db.personsWithNic(nic, exceptId: p?.id);
       if (dups.isNotEmpty && mounted) {
         final names = dups.map((d) => d.fullName).join(', ');
-        if (!await confirm(context, 'මෙම හැඳුනුම්පත් අංකය දැනටමත් ලේඛනයේ ඇත: $names\n\nඑකම පුද්ගලයා දෙවරක් ඇතුළත් වී ඇත්දැයි පරීක්ෂා කරන්න. තවමත් සුරකින්නද?')) {
+        if (!await confirm(context, t.nicDupConfirm(names))) {
           return;
         }
       }
     }
     final age = _dob == null ? null : ageOn(_dob!, DateTime.now());
     if (age != null && age >= 16 && nic == null && mounted) {
-      snack(context, 'සටහන: වයස $age — හැඳුනුම්පත් අංකය පසුව එකතු කරන්න');
+      snack(context, t.nicLaterNote(age));
     }
 
     final members = await (db.select(db.persons)
@@ -165,13 +158,13 @@ class _PersonFormState extends State<PersonForm> {
     if (_relation == 'head') {
       final otherHead = others.where((m) => m.relation == 'head' && m.status != 'dead').firstOrNull;
       if (otherHead != null && mounted &&
-          !await confirm(context, '${otherHead.fullName} දැනටමත් ප්‍රධානියා ලෙස ඇත. පවුලේ ප්‍රධානියන් දෙදෙනෙක් වේ. තවමත් සුරකින්නද?')) {
+          !await confirm(context, t.twoHeadsConfirm(otherHead.fullName))) {
         return;
       }
     } else if (const {'son', 'daughter', 'grandchild'}.contains(_relation) && _dob != null) {
       final head = others.where((m) => m.relation == 'head').firstOrNull;
       if (head?.dob != null && !_dob!.isAfter(head!.dob!) && mounted &&
-          !await confirm(context, 'මෙම පුද්ගලයා ප්‍රධානියාට (${head.fullName}) වඩා වයසින් වැඩියි. සම්බන්ධතාව නිවැරදිද?')) {
+          !await confirm(context, t.olderThanHeadConfirm(head.fullName))) {
         return;
       }
     }
@@ -228,19 +221,19 @@ class _PersonFormState extends State<PersonForm> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     final age = _dob == null ? null : ageOn(_dob!, DateTime.now());
     final statusChanged = p != null && p!.status != _status;
     return Scaffold(
       appBar: BrandAppBar(
-        title: Text(p == null ? 'නව සාමාජිකයෙක්' : p!.fullName),
+        title: Text(p == null ? t.newMember : p!.fullName),
         actions: [
           if (p != null)
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              tooltip: 'වැරදීමකින් ඇතුළත් කළා නම් ඉවත් කරන්න',
+              tooltip: t.removeIfMistake,
               onPressed: () async {
-                if (await confirm(context,
-                    'වැරදීමකින් ඇතුළත් කළා නම් පමණක් ඉවත් කරන්න.\nපදිංචිය හැර ගියා / මියගියා නම් "පදිංචි තත්ත්වය" වෙනස් කරන්න.\n\nඉවත් කරන්නද?',
+                if (await confirm(context, t.personDeleteConfirm(PickRegistry.instance.def(PL.personStatus).title),
                     danger: true)) {
                   await db.softDelete(db.persons, p!.id, landId: widget.landId);
                   if (context.mounted) Navigator.pop(context);
@@ -253,9 +246,9 @@ class _PersonFormState extends State<PersonForm> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          TF(_name, 'සම්පූර්ණ නම *'),
-          TF(_initials, 'මුලකුරු සහිත නම'),
-          TF(_nic, 'ජාතික හැඳුනුම්පත් අංකය', onChanged: _onNic, errorText: _nicError),
+          TF(_name, t.fullNameField),
+          TF(_initials, t.fNameWithInitials),
+          TF(_nic, t.nicField, onChanged: _onNic, errorText: _nicError),
           if (_nicNote != null)
             Text(_nicNote!, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 12)),
           Padding(
@@ -263,9 +256,9 @@ class _PersonFormState extends State<PersonForm> {
             child: InkWell(
               onTap: _pickDob,
               child: InputDecorator(
-                decoration: const InputDecoration(labelText: 'උපන් දිනය', suffixIcon: Icon(Icons.calendar_month)),
+                decoration: InputDecoration(labelText: t.fDob, suffixIcon: const Icon(Icons.calendar_month)),
                 isEmpty: _dob == null,
-                child: Text(_dob == null ? '' : '${dateFmt.format(_dob!)}   (වයස $age)'),
+                child: Text(_dob == null ? '' : '${dateFmt.format(_dob!)}   (${t.ageN(age!)})'),
               ),
             ),
           ),
@@ -274,21 +267,21 @@ class _PersonFormState extends State<PersonForm> {
           PickField(list: PL.ethnicity, value: _ethnicity, onChanged: (v) => setState(() => _ethnicity = v)),
           PickField(list: PL.religion, value: _religion, onChanged: (v) => setState(() => _religion = v)),
           PickField(list: PL.civilStatus, value: _civil, onChanged: (v) => setState(() => _civil = v)),
-          const SectionTitle('අධ්‍යාපනය හා රැකියාව'),
+          SectionTitle(t.eduAndWork),
           PickField(list: PL.education, value: _education, onChanged: (v) => setState(() => _education = v)),
-          if (_education == 'schooling') TF(_grade, 'ශ්‍රේණිය / පාසල'),
+          if (_education == 'schooling') TF(_grade, t.gradeSchoolField),
           PickField(list: PL.occupation, value: _occupation, onChanged: (v) => setState(() => _occupation = v)),
-          TF(_workplace, 'රැකියා ස්ථානය'),
-          const SectionTitle('සෞඛ්‍යය හා වෙනත්'),
+          TF(_workplace, t.fWorkplace),
+          SectionTitle(t.healthOther),
           PickField(list: PL.disability, value: _disability, onChanged: (v) => setState(() => _disability = v)),
-          TF(_illness, 'දීර්ඝකාලීන රෝග (විකල්ප)'),
+          TF(_illness, t.chronicIllnessField),
           PickField(
               list: PL.yesNoUnknown,
-              label: 'ඡන්ද හිමිද',
+              label: t.isVoterField,
               value: _voter,
               onChanged: (v) => setState(() => _voter = v)),
-          TF(_phone, 'දුරකථන අංකය', phone: true),
-          const SectionTitle('පදිංචි තත්ත්වය'),
+          TF(_phone, t.phoneNumber, phone: true),
+          SectionTitle(PickRegistry.instance.def(PL.personStatus).title),
           PickField(
               list: PL.personStatus,
               value: _status,
@@ -297,11 +290,11 @@ class _PersonFormState extends State<PersonForm> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.event),
-              title: Text('වෙනස් වූ දිනය: ${dateFmt.format(_statusDate ?? DateTime.now())}'),
+              title: Text(t.statusChangedOn(dateFmt.format(_statusDate ?? DateTime.now()))),
               trailing: const Icon(Icons.edit_calendar),
               onTap: _pickStatusDate,
             ),
-          TF(_notes, 'සටහන්', maxLines: 2),
+          TF(_notes, t.notes, maxLines: 2),
         ],
       ),
     );
@@ -352,8 +345,8 @@ class _PersonPickerState extends State<_PersonPicker> {
               padding: const EdgeInsets.all(12),
               child: TextField(
                 autofocus: true,
-                decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.search), hintText: 'නම හෝ හැඳුනුම්පත් අංකය'),
+                decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search), hintText: context.l10n.nameOrNicHint),
                 onChanged: _search,
               ),
             ),
@@ -367,7 +360,7 @@ class _PersonPickerState extends State<_PersonPicker> {
                       title: Text(p.fullName),
                       subtitle: Text([
                         if (p.nic != null) maskNic(p.nic),
-                        if (p.dob != null) 'වයස ${ageOn(p.dob!, DateTime.now())}',
+                        if (p.dob != null) context.l10n.ageN(ageOn(p.dob!, DateTime.now())),
                       ].join(' • ')),
                       onTap: () => Navigator.pop(context, p),
                     ),
@@ -397,13 +390,13 @@ Future<void> editLandParty(BuildContext context, String landId, {LandParty? part
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('ඉඩමට සම්බන්ධ පුද්ගලයා', style: Theme.of(c).textTheme.titleLarge),
+            Text(c.l10n.entLandParty, style: Theme.of(c).textTheme.titleLarge),
             PickField(list: PL.partyRole, value: role, onChanged: (v) => setS(() => role = v)),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.person_search),
-              title: Text(person?.fullName ?? 'ලේඛනයෙන් තෝරන්න'),
-              subtitle: const Text('වසමේ පදිංචි අයෙක් නම්'),
+              title: Text(person?.fullName ?? c.l10n.pickFromRegister),
+              subtitle: Text(c.l10n.pickFromRegisterSub),
               trailing: person == null
                   ? null
                   : IconButton(icon: const Icon(Icons.close), onPressed: () => setS(() => person = null)),
@@ -412,15 +405,15 @@ Future<void> editLandParty(BuildContext context, String landId, {LandParty? part
                 if (p != null) setS(() => person = p);
               },
             ),
-            if (person == null) TF(outside, 'හෝ නම (වසමෙන් පිටත ජීවත් වන අයෙක් නම්)'),
-            TF(share, 'කොටස (විකල්ප)', hint: 'උදා: 1/2'),
+            if (person == null) TF(outside, c.l10n.outsideNameField),
+            TF(share, c.l10n.shareField, hint: c.l10n.shareHint),
             const SizedBox(height: 8),
             Row(
               children: [
                 if (party != null)
-                  TextButton(onPressed: () => Navigator.pop(c, 'delete'), child: const Text('ඉවත් කරන්න')),
+                  TextButton(onPressed: () => Navigator.pop(c, 'delete'), child: Text(c.l10n.remove)),
                 const Spacer(),
-                FilledButton(onPressed: () => Navigator.pop(c, 'save'), child: const Text('සුරකින්න')),
+                FilledButton(onPressed: () => Navigator.pop(c, 'save'), child: Text(c.l10n.save)),
               ],
             ),
           ],
@@ -434,7 +427,7 @@ Future<void> editLandParty(BuildContext context, String landId, {LandParty? part
   }
   if (r != 'save' || role == null) return;
   if (person == null && txt(outside) == null) {
-    if (context.mounted) snack(context, 'පුද්ගලයෙක් තෝරන්න හෝ නම ඇතුළත් කරන්න');
+    if (context.mounted) snack(context, context.l10n.pickPersonOrName);
     return;
   }
   final id = party?.id ?? newId();

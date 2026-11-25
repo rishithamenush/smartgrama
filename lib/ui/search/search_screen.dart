@@ -13,6 +13,7 @@ import '../land/land_sections.dart';
 import '../people/person_card.dart';
 import '../widgets/brand.dart';
 import '../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 class _Results {
   _Results(this.persons, this.lands, this.buildings);
@@ -77,16 +78,17 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     final r = _r;
     final now = DateTime.now();
+    final t = context.l10n;
     return BrandPage(
-      title: 'සෙවීම',
-      subtitle: r == null ? 'පුද්ගලයින්, ඉඩම්, ගොඩනැගිලි' : 'ප්‍රතිඵල ${r.total}',
+      title: t.navSearch,
+      subtitle: r == null ? t.searchSubtitle : t.resultsN(r.total),
       icon: Icons.search_rounded,
       headerChild: TextField(
         controller: _ctrl,
         style: const TextStyle(fontSize: 17),
         decoration: InputDecoration(
           prefixIcon: const Icon(Icons.search_rounded, color: Brand.brownMid),
-          hintText: 'නම, හැඳුනුම්පත, ඉඩම, ඔප්පු අංකය…',
+          hintText: t.searchFieldHint,
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -113,16 +115,13 @@ class _SearchScreenState extends State<SearchScreen> {
         },
       ),
       body: r == null
-          ? ListView(children: const [
-              EmptyHint('නම, හැඳුනුම්පත් අංකය, දුරකථන අංකය,\nඉඩමේ නම හෝ ඔප්පු අංකය ටයිප් කරන්න',
-                  icon: Icons.manage_search_rounded),
-            ])
+          ? ListView(children: [EmptyHint(t.searchEmptyHint, icon: Icons.manage_search_rounded)])
           : r.isEmpty
-              ? ListView(children: const [EmptyHint('කිසිවක් හමු නොවීය', icon: Icons.search_off_rounded)])
+              ? ListView(children: [EmptyHint(t.searchNoResults, icon: Icons.search_off_rounded)])
               : ListView(
                   padding: const EdgeInsets.only(bottom: 32),
                   children: [
-                    if (r.persons.isNotEmpty) SectionTitle('පුද්ගලයින් (${r.persons.length})'),
+                    if (r.persons.isNotEmpty) SectionTitle('${t.persons} (${r.persons.length})'),
                     for (final p in r.persons)
                       ListCard(
                         icon: p.gender == 'f' ? Icons.woman_rounded : Icons.man_rounded,
@@ -130,12 +129,12 @@ class _SearchScreenState extends State<SearchScreen> {
                         title: p.fullName,
                         subtitle: [
                           if (p.nic != null) maskNic(p.nic),
-                          if (p.dob != null) 'වයස ${ageOn(p.dob!, now)}',
+                          if (p.dob != null) t.ageN(ageOn(p.dob!, now)),
                           if (p.status != 'resident') pl(PL.personStatus, p.status),
                         ].join(' • '),
                         onTap: () => push(context, PersonCard(personId: p.id)),
                       ),
-                    if (r.lands.isNotEmpty) SectionTitle('ඉඩම් (${r.lands.length})'),
+                    if (r.lands.isNotEmpty) SectionTitle('${t.lands} (${r.lands.length})'),
                     for (final l in r.lands)
                       ListCard(
                         icon: Icons.landscape_rounded,
@@ -145,7 +144,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         trailing: StatusBadge(l.status),
                         onTap: () => push(context, LandCard(landId: l.id)),
                       ),
-                    if (r.buildings.isNotEmpty) SectionTitle('ගොඩනැගිලි (${r.buildings.length})'),
+                    if (r.buildings.isNotEmpty) SectionTitle('${t.buildings} (${r.buildings.length})'),
                     for (final b in r.buildings)
                       ListCard(
                         icon: Icons.home_work_rounded,

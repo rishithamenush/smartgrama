@@ -8,6 +8,7 @@ import '../../data/picklists.dart';
 import '../widgets/common.dart';
 import '../widgets/fields.dart';
 import '../widgets/brand.dart';
+import '../../l10n/l10n.dart';
 
 /// Suggests permanence from materials (officer can override).
 String? suggestPermanence(String? wall, String? roof, String? floor) {
@@ -80,12 +81,12 @@ class _BuildingFormState extends State<BuildingForm> {
 
   Future<void> _save() async {
     if (_type == null) {
-      snack(context, 'ගොඩනැගිලි වර්ගය තෝරන්න');
+      snack(context, context.l10n.selectBuildingType);
       return;
     }
     final year = intOf(_year);
     if (year != null && (year < 1800 || year > DateTime.now().year)) {
-      snack(context, 'ඉදිකළ වර්ෂය වලංගු නැත');
+      snack(context, context.l10n.yearBuiltInvalid);
       return;
     }
     setState(() => _busy = true);
@@ -123,17 +124,16 @@ class _BuildingFormState extends State<BuildingForm> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     return Scaffold(
       appBar: BrandAppBar(
-        title: Text(b == null ? 'නව ගොඩනැගිල්ලක්' : pl(PL.buildingType, b!.type)),
+        title: Text(b == null ? t.newBuilding : pl(PL.buildingType, b!.type)),
         actions: [
           if (b != null)
             IconButton(
               icon: const Icon(Icons.delete_outline),
               onPressed: () async {
-                if (await confirm(context,
-                    'මෙම ගොඩනැගිල්ල සහ එහි ජීවත් වන පවුල් ඉවත් කරන්නද? (ඉතිහාසයේ රැඳේ)',
-                    danger: true)) {
+                if (await confirm(context, t.buildingDeleteConfirm, danger: true)) {
                   await db.deleteBuildingCascade(b!.id, widget.landId);
                   if (context.mounted) Navigator.pop(context);
                 }
@@ -150,15 +150,15 @@ class _BuildingFormState extends State<BuildingForm> {
               value: _type,
               required: true,
               onChanged: (v) => setState(() => _type = v)),
-          TF(_no, 'ගෘහ / ගොඩනැගිලි අංකය', hint: 'ප්‍රාදේශීය සභා අංකය ඇත්නම්'),
+          TF(_no, t.buildingNoField, hint: t.buildingNoHint),
           if (_isStructure) ...[
             Row(children: [
-              Expanded(child: TF(_floors, 'මහල් ගණන', number: true)),
+              Expanded(child: TF(_floors, t.floorsField, number: true)),
               const SizedBox(width: 8),
-              Expanded(child: TF(_area, 'බිම් ප්‍රමාණය (වර්ග අඩි)', decimal: true)),
+              Expanded(child: TF(_area, t.floorAreaField, decimal: true)),
             ]),
-            if (_isHouse) TF(_rooms, 'කාමර ගණන', number: true),
-            const SectionTitle('ඉදිකිරීම් ද්‍රව්‍ය'),
+            if (_isHouse) TF(_rooms, t.roomsField, number: true),
+            SectionTitle(t.materials),
             PickField(list: PL.wall, value: _wall, onChanged: (v) => setState(() { _wall = v; _materials(); })),
             PickField(list: PL.roof, value: _roof, onChanged: (v) => setState(() { _roof = v; _materials(); })),
             PickField(list: PL.floor, value: _floor, onChanged: (v) => setState(() { _floor = v; _materials(); })),
@@ -171,10 +171,10 @@ class _BuildingFormState extends State<BuildingForm> {
                     })),
           ],
           PickField(list: PL.condition, value: _cond, onChanged: (v) => setState(() => _cond = v)),
-          TF(_year, 'ඉදිකළ වර්ෂය (දළ වශයෙන්)', number: true),
+          TF(_year, t.yearBuiltField, number: true),
           if (_isStructure) ...[
             PickField(list: PL.buildingUsage, value: _usage, onChanged: (v) => setState(() => _usage = v)),
-            const SectionTitle('පහසුකම්'),
+            SectionTitle(t.facilities),
             PickField(list: PL.electricity, value: _elec, onChanged: (v) => setState(() => _elec = v)),
           ],
           if (_isHouse) ...[
@@ -184,7 +184,7 @@ class _BuildingFormState extends State<BuildingForm> {
           if (_isStructure)
             PickField(
                 list: PL.yesNoUnknown,
-                label: 'ඉදිකිරීම් අනුමැතිය',
+                label: t.buildingApproval,
                 value: _approval,
                 onChanged: (v) => setState(() => _approval = v)),
           GpsField(
@@ -195,7 +195,7 @@ class _BuildingFormState extends State<BuildingForm> {
               _lng = b;
             }),
           ),
-          const SectionTitle('ඡායාරූප'),
+          SectionTitle(t.photos),
           StreamBuilder<List<Photo>>(
             stream: (db.select(db.photos)
                   ..where((p) => p.ownerId.equals(_id) & p.deletedAt.isNull()))
@@ -208,11 +208,11 @@ class _BuildingFormState extends State<BuildingForm> {
             ),
           ),
           if (_isHouse)
-            const Padding(
-              padding: EdgeInsets.only(top: 4),
-              child: Text('නිවසේ ඉදිරිපස ඡායාරූපයක් අනිවාර්යයි.', style: TextStyle(fontSize: 12)),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(t.housePhotoRequired, style: const TextStyle(fontSize: 12)),
             ),
-          TF(_notes, 'සටහන්', maxLines: 2),
+          TF(_notes, t.notes, maxLines: 2),
         ],
       ),
     );

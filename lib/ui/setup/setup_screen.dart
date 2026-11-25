@@ -8,6 +8,7 @@ import '../widgets/common.dart';
 import '../widgets/fields.dart';
 import 'structure_screen.dart';
 import '../widgets/brand.dart';
+import '../../l10n/l10n.dart';
 
 /// Division details. Used on first run (then continues to villages) and
 /// from settings.
@@ -31,7 +32,7 @@ class _SetupScreenState extends State<SetupScreen> {
 
   Future<void> _save() async {
     if (txt(_code) == null || txt(_name) == null) {
-      snack(context, 'වසම් අංකය හා නම අනිවාර්යයි');
+      snack(context, context.l10n.codeNameRequired);
       return;
     }
     setState(() => _busy = true);
@@ -67,29 +68,27 @@ class _SetupScreenState extends State<SetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     return Scaffold(
-      appBar: BrandAppBar(title: const Text('වසම් තොරතුරු')),
+      appBar: BrandAppBar(title: Text(t.divisionDetails)),
       bottomNavigationBar: SaveBar(
         onSave: _save,
         busy: _busy,
-        label: widget.onDone == null ? 'සුරකින්න' : 'ඉදිරියට',
+        label: widget.onDone == null ? t.save : t.continueAction,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           if (widget.onDone != null)
-            const Padding(
-              padding: EdgeInsets.only(bottom: 12),
-              child: Text(
-                'ආයුබෝවන්! මුලින්ම ඔබේ ග්‍රාම නිලධාරී වසමේ තොරතුරු ඇතුළත් කරන්න.',
-                style: TextStyle(fontSize: 16),
-              ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(t.setupWelcome, style: const TextStyle(fontSize: 16)),
             ),
-          TF(_code, 'වසම් අංකය *', hint: 'උදා: 1001'),
-          TF(_name, 'වසමේ නම *', hint: 'උදා: හාරගම'),
-          TF(_ds, 'ප්‍රාදේශීය ලේකම් කොට්ඨාසය', hint: 'උදා: පාතහේවාහැට'),
-          TF(_district, 'දිස්ත්‍රික්කය', hint: 'උදා: මහනුවර'),
-          TF(_officer, 'ග්‍රාම නිලධාරී නම'),
+          TF(_code, t.divisionNoField, hint: t.divisionNoHint),
+          TF(_name, t.divisionNameField, hint: t.divisionNameHint),
+          TF(_ds, t.dsDivisionField, hint: t.dsDivisionHint),
+          TF(_district, t.districtField, hint: t.districtHint),
+          TF(_officer, t.gnNameField),
         ],
       ),
     );

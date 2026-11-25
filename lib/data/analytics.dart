@@ -1,3 +1,4 @@
+import '../l10n/l10n.dart';
 import 'bundle.dart';
 import 'database.dart';
 import 'nic.dart';
@@ -28,82 +29,81 @@ class LandCheck {
 const _noOwnerNeeded = {'state', 'reserve', 'temple'};
 const _childRelations = {'son', 'daughter', 'grandchild'};
 
+String _num(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toString();
+
 bool isActive(Person p) => p.status == 'resident' || p.status == 'away';
 
 int? ageOf(Person p, DateTime now) => p.dob == null ? null : ageOn(p.dob!, now);
 
 LandCheck checkLand(LandBundle b, {DateTime? now}) {
   now ??= DateTime.now();
+  final t = L10n.current;
   final l = b.land;
   final items = <CheckItem>[
-    CheckItem('GPS ස්ථානය', l.lat != null),
-    CheckItem('ඉඩමේ ප්‍රමාණය', l.extentPerches != null),
-    CheckItem('අයිතියේ වර්ගය', l.ownershipType != null),
+    CheckItem(t.ckGps, l.lat != null),
+    CheckItem(t.ckExtent, l.extentPerches != null),
+    CheckItem(PickRegistry.instance.def(PL.ownership).title, l.ownershipType != null),
     CheckItem(
-      'අයිතිකරු',
+      t.ckOwner,
       _noOwnerNeeded.contains(l.ownershipType) ||
           b.parties.any((p) => p.role == 'owner'),
-      'මිනිසුන් ටැබයෙන් අයිතිකරු එකතු කරන්න',
+      t.ckOwnerHint(t.people),
     ),
-    CheckItem('ඉඩම් භාවිතය', l.landUse != null),
-    CheckItem('ගොඩනැගිලි', b.buildings.isNotEmpty || l.noBuildings,
-        'ගොඩනැගිලි නැත්නම් "නැත" ලෙස සලකුණු කරන්න'),
-    CheckItem('ඡායාරූප', b.photos.isNotEmpty),
+    CheckItem(PickRegistry.instance.def(PL.landUse).title, l.landUse != null),
+    CheckItem(t.buildings, b.buildings.isNotEmpty || l.noBuildings, t.ckNoneHintBuildings),
+    CheckItem(t.photos, b.photos.isNotEmpty),
   ];
 
   final houses = b.houses.toList();
   if (houses.isNotEmpty) {
     items.add(CheckItem(
-      'නිවාසවල ඡායාරූප',
+      t.ckHousePhotos,
       houses.every((h) => b.photosOf(h.id).isNotEmpty),
     ));
     final lived = houses.where((h) => h.usage != 'vacant');
     items.add(CheckItem(
-      'නිවාසවල පවුල්',
+      t.ckHouseFamilies,
       lived.every((h) => b.familiesIn(h.id).isNotEmpty),
-      'හිස් නිවසක් නම් භාවිතය "හිස්" ලෙස තෝරන්න',
+      t.ckHouseFamiliesHint(pl(PL.buildingUsage, 'vacant')),
     ));
   }
   if (b.families.isNotEmpty) {
     items.add(CheckItem(
-      'පවුල් සාමාජිකයින්',
+      t.ckMembers,
       b.families.every((f) => b.membersOf(f.id).isNotEmpty),
     ));
   }
   items.add(CheckItem(
-    'ගස් හා බෝග',
+    t.treesAndCrops,
     b.treeCounts.isNotEmpty || b.trees.isNotEmpty || b.crops.isNotEmpty || l.noTrees,
-    'ගස් නැත්නම් "නැත" ලෙස සලකුණු කරන්න',
+    t.ckNoneHintTrees,
   ));
   items.add(CheckItem(
-    'සතුන්',
+    t.animals,
     b.animals.isNotEmpty || l.noAnimals,
-    'සතුන් නැත්නම් "නැත" ලෙස සලකුණු කරන්න',
+    t.ckNoneHintAnimals,
   ));
 
   final warnings = <String>[];
   if (l.gpsAccuracy != null && l.gpsAccuracy! > 10) {
-    warnings.add('GPS නිරවද්‍යතාව මීටර් ${l.gpsAccuracy!.round()} — නැවත ගැනීම සුදුසුයි');
+    warnings.add(t.wGpsAccuracy(l.gpsAccuracy!.round()));
   }
   final counted = b.treeCounts.fold<int>(0, (s, t) => s + t.bearing + t.young);
   if (l.extentPerches != null && l.extentPerches! > 0 && counted > l.extentPerches! * 2) {
-    warnings.add(
-        '${formatExtent(l.extentPerches)} ඉඩමකට ගස් $counted ක් — ප්‍රමාණය හෝ ගණන පරීක්ෂා කරන්න');
+    warnings.add(t.wTooManyTrees(formatExtent(l.extentPerches), counted));
   }
   for (final f in b.families) {
     final members = b.membersOf(f.id).where(isActive).toList();
     final heads = members.where((p) => p.relation == 'head').toList();
     if (members.isNotEmpty && heads.length != 1) {
-      warnings.add(heads.isEmpty
-          ? 'පවුලක ප්‍රධානියා තෝරා නැත'
-          : 'එක් පවුලක ප්‍රධානියන් ${heads.length} දෙනෙක්');
+      warnings.add(heads.isEmpty ? t.wNoHead : t.wManyHeads(heads.length));
     }
     if (heads.length == 1) {
       final headAge = ageOf(heads.first, now);
       for (final c in members.where((p) => _childRelations.contains(p.relation))) {
         final a = ageOf(c, now);
         if (headAge != null && a != null && a >= headAge) {
-          warnings.add('${c.fullName} ප්‍රධානියාට වඩා වයසින් වැඩියි — සම්බන්ධතාව පරීක්ෂා කරන්න');
+          warnings.add(t.wOlderThanHead(c.fullName));
         }
       }
     }
@@ -111,18 +111,18 @@ LandCheck checkLand(LandBundle b, {DateTime? now}) {
   final seenNic = <String, String>{};
   for (final p in b.persons.where(isActive)) {
     final age = ageOf(p, now);
-    if (p.dob == null) warnings.add('${p.fullName} — උපන් දිනය නැත');
+    if (p.dob == null) warnings.add(t.wNoDob(p.fullName));
     if ((p.nic ?? '').isEmpty) {
-      if (age != null && age >= 16) warnings.add('${p.fullName} — හැඳුනුම්පත් අංකය නැත (වයස $age)');
+      if (age != null && age >= 16) warnings.add(t.wNoNic(p.fullName, age));
     } else {
       final r = parseNic(p.nic!, now: now);
       if (!r.isValid) {
-        warnings.add('${p.fullName} — හැඳුනුම්පත් අංකය වලංගු නැත');
+        warnings.add(t.wInvalidNic(p.fullName));
       } else if (p.dob != null && r.info!.dob != DateTime(p.dob!.year, p.dob!.month, p.dob!.day)) {
-        warnings.add('${p.fullName} — උපන් දිනය හැඳුනුම්පත සමඟ නොගැළපේ');
+        warnings.add(t.wDobNicMismatch(p.fullName));
       }
       final other = seenNic[p.nic!];
-      if (other != null) warnings.add('${p.fullName} හා $other — එකම හැඳුනුම්පත් අංකය');
+      if (other != null) warnings.add(t.wSameNic(p.fullName, other));
       seenNic[p.nic!] = p.fullName;
     }
   }
@@ -287,7 +287,7 @@ List<GroupProgress> surveyProgress(Snapshot s) => [
     ];
 
 // ===================================================================
-// Ready-made lists ("සූදානම් ලැයිස්තු") and data quality
+// Ready-made lists ("සූදානම් ලැයිස්තු" / ready-made lists) and data quality
 // ===================================================================
 
 class ListHit {
@@ -299,10 +299,13 @@ class ListHit {
 }
 
 class ReadyList {
-  const ReadyList(this.id, this.title, this.run);
+  const ReadyList(this.id, this._title, this.run);
   final String id;
-  final String title;
+  final String Function(AppLocalizations t) _title;
   final List<ListHit> Function(Snapshot s, DateTime now) run;
+
+  /// Title in the current language.
+  String get title => _title(L10n.current);
 }
 
 String _place(Snapshot s, String? landId) {
@@ -317,7 +320,7 @@ ListHit _personHit(Snapshot s, Person p, DateTime now, [String extra = '']) {
   final landId = s.landOfPerson(p);
   return ListHit(
     p.fullName,
-    [if (age != null) 'වයස $age', if (extra.isNotEmpty) extra, _place(s, landId)]
+    [if (age != null) L10n.current.ageN(age), if (extra.isNotEmpty) extra, _place(s, landId)]
         .where((x) => x.isNotEmpty)
         .join(' • '),
     landId,
@@ -341,7 +344,7 @@ ListHit _familyHit(Snapshot s, Family f, String extra) {
   final head = s.personById[f.headPersonId];
   final landId = s.landOfFamily[f.id];
   return ListHit(
-    head == null ? 'පවුල' : '${head.fullName} ගේ පවුල',
+    head == null ? L10n.current.family : L10n.current.familyOf(head.fullName),
     [extra, _place(s, landId)].where((x) => x.isNotEmpty).join(' • '),
     landId,
   );
@@ -350,11 +353,11 @@ ListHit _familyHit(Snapshot s, Family f, String extra) {
 Iterable<Building> _houses(Snapshot s) => s.buildings.where((b) => b.type == 'house');
 
 final List<ReadyList> readyLists = [
-  ReadyList('elderly60', 'වයස 60 ට වැඩි අය', (s, now) => [
+  ReadyList('elderly60', (t) => t.rlElderly60, (s, now) => [
         for (final p in s.persons.where(isActive))
           if ((ageOf(p, now) ?? -1) >= 60) _personHit(s, p, now),
       ]),
-  ReadyList('alone70', 'වයස 70+ තනිව ජීවත් වන අය', (s, now) {
+  ReadyList('alone70', (t) => t.rlAlone70, (s, now) {
     final activeByFamily = <String, int>{};
     for (final p in s.persons.where((p) => p.status == 'resident')) {
       activeByFamily[p.familyId] = (activeByFamily[p.familyId] ?? 0) + 1;
@@ -365,58 +368,58 @@ final List<ReadyList> readyLists = [
           _personHit(s, p, now),
     ];
   }),
-  ReadyList('under5', 'වයස 5 ට අඩු ළමුන්', (s, now) => [
+  ReadyList('under5', (t) => t.rlUnder5, (s, now) => [
         for (final p in s.persons.where(isActive))
           if ((ageOf(p, now) ?? 99) <= 5) _personHit(s, p, now),
       ]),
-  ReadyList('school', 'පාසල් යන ළමුන්', (s, now) => [
+  ReadyList('school', (t) => t.rlSchool, (s, now) => [
         for (final p in s.persons.where(isActive))
           if (p.education == 'schooling')
-            _personHit(s, p, now, p.schoolGrade == null ? '' : 'ශ්‍රේණිය ${p.schoolGrade}'),
+            _personHit(s, p, now, p.schoolGrade == null ? '' : L10n.current.gradeN(p.schoolGrade!)),
       ]),
-  ReadyList('disabled', 'ආබාධිත පුද්ගලයින්', (s, now) => [
+  ReadyList('disabled', (t) => t.rlDisabled, (s, now) => [
         for (final p in s.persons.where(isActive))
           if (p.disability != null && p.disability != 'none')
             _personHit(s, p, now, pl(PL.disability, p.disability)),
       ]),
-  ReadyList('away', 'විදේශගත / තාවකාලිකව නැති අය', (s, now) => [
+  ReadyList('away', (t) => t.rlAway, (s, now) => [
         for (final p in s.persons)
           if (p.status == 'away' || (isActive(p) && p.occupation == 'foreign'))
             _personHit(s, p, now, pl(PL.occupation, p.occupation)),
       ]),
-  ReadyList('no_nic', 'හැඳුනුම්පත් අංකය නැති වැඩිහිටියන් (16+)', (s, now) => [
+  ReadyList('no_nic', (t) => t.adultsWithoutNic, (s, now) => [
         for (final p in s.persons.where(isActive))
           if ((p.nic ?? '').isEmpty && (ageOf(p, now) ?? 0) >= 16) _personHit(s, p, now),
       ]),
-  ReadyList('welfare', 'සුබසාධන ප්‍රතිලාභ ලබන පවුල්', (s, now) => [
+  ReadyList('welfare', (t) => t.rlWelfare, (s, now) => [
         for (final f in s.families)
           if (splitCodes(f.welfare).isNotEmpty)
             _familyHit(s, f, PickRegistry.instance.labels(PL.welfare, f.welfare)),
       ]),
-  ReadyList('poor_houses', 'අබලන් නිවාස', (s, now) => [
+  ReadyList('poor_houses', (t) => t.dilapidatedHouses, (s, now) => [
         for (final b in _houses(s))
           if (b.condition == 'poor' || b.condition == 'unusable')
             _buildingHit(s, b, pl(PL.condition, b.condition)),
       ]),
-  ReadyList('temp_houses', 'තාවකාලික / අර්ධ ස්ථිර නිවාස', (s, now) => [
+  ReadyList('temp_houses', (t) => t.rlTempHouses, (s, now) => [
         for (final b in _houses(s))
           if (b.permanence == 'temporary' || b.permanence == 'semi')
             _buildingHit(s, b, pl(PL.permanence, b.permanence)),
       ]),
-  ReadyList('no_toilet', 'වැසිකිළි නැති නිවාස', (s, now) => [
+  ReadyList('no_toilet', (t) => t.rlNoToilet, (s, now) => [
         for (final b in _houses(s))
           if (b.toilet == 'none') _buildingHit(s, b, ''),
       ]),
-  ReadyList('no_power', 'විදුලිය නැති නිවාස', (s, now) => [
+  ReadyList('no_power', (t) => t.rlNoPower, (s, now) => [
         for (final b in _houses(s))
           if (b.electricity == 'none') _buildingHit(s, b, ''),
       ]),
-  ReadyList('unsafe_water', 'ආරක්ෂිත ජලය නැති නිවාස', (s, now) => [
+  ReadyList('unsafe_water', (t) => t.rlUnsafeWater, (s, now) => [
         for (final b in _houses(s))
           if (const {'unprotected_well', 'stream', 'bowser'}.contains(b.waterSource))
             _buildingHit(s, b, pl(PL.water, b.waterSource)),
       ]),
-  ReadyList('state_land', 'රජයේ / අනවසර ඉඩම්වල පදිංචි පවුල්', (s, now) => [
+  ReadyList('state_land', (t) => t.rlStateLand, (s, now) => [
         for (final f in s.families)
           if (() {
             final l = s.landById[s.landOfFamily[f.id]];
@@ -425,28 +428,28 @@ final List<ReadyList> readyLists = [
           }())
             _familyHit(s, f, pl(PL.ownership, s.landById[s.landOfFamily[f.id]]?.ownershipType)),
       ]),
-  ReadyList('disputes', 'ආරවුල් ඇති ඉඩම්', (s, now) => [
+  ReadyList('disputes', (t) => t.landsWithDisputes, (s, now) => [
         for (final l in s.lands)
           if (l.hasDispute) _landHit(s, l, l.disputeNote ?? ''),
       ]),
-  ReadyList('milk', 'කිරි සතුන් ඇති පවුල් / ඉඩම්', (s, now) => [
+  ReadyList('milk', (t) => t.rlMilk, (s, now) => [
         for (final a in s.animals)
           if (a.purpose == 'milk')
             ListHit(
               '${pl(PL.animal, a.species)} ${a.male + a.female + a.young}',
               [
-                if (a.dailyMilkL != null) 'දිනකට ලී. ${a.dailyMilkL}',
+                if (a.dailyMilkL != null) L10n.current.milkPerDay(_num(a.dailyMilkL!)),
                 _place(s, a.landId),
-              ].join(' • '),
+              ].where((x) => x.isNotEmpty).join(' • '),
               a.landId,
             ),
       ]),
-  ReadyList('dogs', 'එන්නත් නොකළ සුනඛයින්', (s, now) => [
+  ReadyList('dogs', (t) => t.rlDogs, (s, now) => [
         for (final a in s.animals)
           if (a.species == 'dog' && a.vaccinated != 'yes')
-            ListHit('සුනඛයින් ${a.male + a.female + a.young}', _place(s, a.landId), a.landId),
+            ListHit(L10n.current.dogsN(a.male + a.female + a.young), _place(s, a.landId), a.landId),
       ]),
-  ReadyList('timber', 'දැව / වටිනා ගස් ඇති ඉඩම්', (s, now) {
+  ReadyList('timber', (t) => t.rlTimber, (s, now) {
     final byLand = <String, List<Tree>>{};
     for (final t in s.trees) {
       byLand.putIfAbsent(t.landId, () => []).add(t);
@@ -461,7 +464,7 @@ final List<ReadyList> readyLists = [
           ),
     ];
   }),
-  ReadyList('hazard_trees', 'අනතුරුදායක ගස්', (s, now) => [
+  ReadyList('hazard_trees', (t) => t.rlHazardTrees, (s, now) => [
         for (final t in s.trees)
           if (t.isHazard)
             ListHit(pl(PL.treeSingleSpecies, t.species), _place(s, t.landId), t.landId),
@@ -483,45 +486,46 @@ List<QualitySection> qualityReport(Snapshot s, {DateTime? now}) {
   final houses = _houses(s);
   final photoOwners = s.photos.map((p) => p.ownerId).toSet();
   final stale = now.subtract(const Duration(days: 365));
+  final t = L10n.current;
   return [
-    QualitySection('එකම හැඳුනුම්පත් අංකය කිහිප දෙනෙකුට', [
+    QualitySection(t.qSameNic, [
       for (final g in nicGroups.values)
         if (g.length > 1)
           for (final p in g) _personHit(s, p, now, p.nic!),
     ]),
-    QualitySection('වලංගු නැති හැඳුනුම්පත් අංක', [
+    QualitySection(t.qInvalidNic, [
       for (final p in s.persons.where(isActive))
         if ((p.nic ?? '').isNotEmpty && !parseNic(p.nic!, now: now).isValid)
           _personHit(s, p, now, p.nic!),
     ]),
-    QualitySection('හැඳුනුම්පත් අංකය නැති වැඩිහිටියන් (16+)', [
+    QualitySection(t.adultsWithoutNic, [
       for (final p in s.persons.where(isActive))
         if ((p.nic ?? '').isEmpty && (ageOf(p, now) ?? 0) >= 16) _personHit(s, p, now),
     ]),
-    QualitySection('උපන් දිනය නැති අය', [
+    QualitySection(t.qNoDob, [
       for (final p in s.persons.where(isActive))
         if (p.dob == null) _personHit(s, p, now),
     ]),
-    QualitySection('GPS නැති ඉඩම්', [
+    QualitySection(t.qNoGps, [
       for (final l in s.lands)
         if (l.lat == null) _landHit(s, l, ''),
     ]),
-    QualitySection('GPS නිරවද්‍යතාව අඩු ඉඩම් (මීටර් 10+)', [
+    QualitySection(t.qPoorGps, [
       for (final l in s.lands)
-        if ((l.gpsAccuracy ?? 0) > 10) _landHit(s, l, 'මී. ${l.gpsAccuracy!.round()}'),
+        if ((l.gpsAccuracy ?? 0) > 10) _landHit(s, l, t.metresN(l.gpsAccuracy!.round())),
     ]),
-    QualitySection('ඡායාරූප නැති නිවාස', [
+    QualitySection(t.qNoHousePhoto, [
       for (final b in houses)
         if (!photoOwners.contains(b.id)) _buildingHit(s, b, ''),
     ]),
-    QualitySection('තවම කෙටුම්පත් ලෙස ඇති ඉඩම්', [
+    QualitySection(t.qDraft, [
       for (final l in s.lands)
         if (l.status == 'draft') _landHit(s, l, ''),
     ]),
-    QualitySection('අවුරුද්දකට වඩා තහවුරු නොකළ ඉඩම්', [
+    QualitySection(t.qStale, [
       for (final l in s.lands)
         if (l.status == 'verified' && l.verifiedAt != null && l.verifiedAt!.isBefore(stale))
-          _landHit(s, l, 'අවසන් වරට ${l.verifiedAt!.year}'),
+          _landHit(s, l, t.lastVerifiedYear('${l.verifiedAt!.year}')),
     ]),
   ];
 }

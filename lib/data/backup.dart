@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:drift/drift.dart';
 import 'package:path/path.dart' as p;
 
+import '../l10n/l10n.dart';
 import 'database.dart';
 
 class BackupError implements Exception {
@@ -28,7 +29,7 @@ Future<List<String>> _tables(AppDb db, String schema) async {
 /// new phone). Photos are stored inside the same encrypted file.
 Future<void> createBackup(AppDb db, File target, String password,
     {required Directory photosDir, bool includePhotos = true}) async {
-  if (password.length < 6) throw BackupError('මුරපදය අවම අකුරු 6 ක් විය යුතුය');
+  if (password.length < 6) throw BackupError(L10n.current.backupPasswordTooShort);
   if (await target.exists()) await target.delete();
   await db.customStatement('ATTACH DATABASE ? AS bak KEY ?', [target.path, password]);
   try {
@@ -61,7 +62,7 @@ Future<void> createBackup(AppDb db, File target, String password,
 
 /// Replaces all data with the contents of a backup file.
 Future<void> restoreBackup(AppDb db, File source, String password, {required Directory photosDir}) async {
-  const wrong = 'මුරපදය වැරදියි, නැතහොත් මෙය SmartGrama උපස්ථ ගොනුවක් නොවේ';
+  final wrong = L10n.current.backupWrongPassword;
   try {
     await db.customStatement('ATTACH DATABASE ? AS bak KEY ?', [source.path, password]);
   } catch (_) {
@@ -76,12 +77,12 @@ Future<void> restoreBackup(AppDb db, File source, String password, {required Dir
       throw BackupError(wrong);
     }
     if (version != db.schemaVersion) {
-      throw BackupError('මෙම උපස්ථය වෙනත් අනුවාදයකින් සාදා ඇත ($version)');
+      throw BackupError(L10n.current.backupOtherVersion(version));
     }
     final backupTables = (await _tables(db, 'bak')).toSet();
     final mainTables = await _tables(db, 'main');
     if (!backupTables.contains('lands')) {
-      throw BackupError('මෙය SmartGrama උපස්ථ ගොනුවක් නොවේ');
+      throw BackupError(L10n.current.backupNotSmartGrama);
     }
     await db.transaction(() async {
       await db.customStatement('PRAGMA defer_foreign_keys = ON');

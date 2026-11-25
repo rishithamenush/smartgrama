@@ -7,6 +7,7 @@ import '../../data/database.dart';
 import '../widgets/common.dart';
 import '../widgets/fields.dart';
 import '../widgets/brand.dart';
+import '../../l10n/l10n.dart';
 
 /// Villages ("ගම්මාන") and house groups ("ගෘහ කණ්ඩායම්").
 class StructureScreen extends StatelessWidget {
@@ -18,24 +19,25 @@ class StructureScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final db = AppState.db;
+    final t = context.l10n;
     return StreamBuilder<Snapshot>(
       stream: db.watchLoad([db.villages, db.houseGroups, db.lands], db.loadSnapshot),
       builder: (context, snap) {
         final s = snap.data;
         return Scaffold(
-          appBar: BrandAppBar(title: const Text('ගම්මාන හා ගෘහ කණ්ඩායම්')),
+          appBar: BrandAppBar(title: Text(t.villagesAndGroups)),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => editVillage(context, null),
             icon: const Icon(Icons.add),
-            label: const Text('ගම්මානයක්'),
+            label: Text(t.addVillageButton),
           ),
           bottomNavigationBar: onDone == null || s == null
               ? null
               : SaveBar(
-                  label: 'ඉදිරියට',
+                  label: t.continueAction,
                   onSave: () {
                     if (s.groups.isEmpty) {
-                      snack(context, 'අවම වශයෙන් එක් ගම්මානයක් හා ගෘහ කණ්ඩායමක් එකතු කරන්න');
+                      snack(context, t.needOneGroup);
                       return;
                     }
                     onDone!();
@@ -44,9 +46,7 @@ class StructureScreen extends StatelessWidget {
           body: s == null
               ? const Center(child: CircularProgressIndicator())
               : s.villages.isEmpty
-                  ? const EmptyHint(
-                      'ඔබේ වසමේ ගම්මාන එකතු කරන්න. ඉන්පසු එක් එක් ගම්මානයට ගෘහ කණ්ඩායම් (උදා: 1001/01) එකතු කරන්න.',
-                      icon: Icons.holiday_village)
+                  ? EmptyHint(t.structureEmpty, icon: Icons.holiday_village)
                   : ListView(
                       padding: const EdgeInsets.only(bottom: 96),
                       children: [
@@ -58,7 +58,7 @@ class StructureScreen extends StatelessWidget {
                               title: Text(v.name),
                               subtitle: v.supervisingOfficer == null
                                   ? null
-                                  : Text('සමීප අධීක්ෂණය: ${v.supervisingOfficer}'),
+                                  : Text(t.supervisingValue(v.supervisingOfficer!)),
                               trailing: IconButton(
                                 icon: const Icon(Icons.edit),
                                 onPressed: () => editVillage(context, v),
@@ -69,16 +69,16 @@ class StructureScreen extends StatelessWidget {
                                     leading: const Icon(Icons.groups),
                                     title: Text(g.code),
                                     subtitle: Text([
-                                      if (g.leaderName != null) 'නායක: ${g.leaderName}',
-                                      'ඉඩම් ${s.lands.where((l) => l.houseGroupId == g.id).length}'
-                                          '${g.expectedLands == null ? '' : ' / ${g.expectedLands}'}',
+                                      if (g.leaderName != null) t.leaderValue(g.leaderName!),
+                                      t.landsN(s.lands.where((l) => l.houseGroupId == g.id).length) +
+                                          (g.expectedLands == null ? '' : ' / ${g.expectedLands}'),
                                     ].join(' • ')),
                                     trailing: const Icon(Icons.edit),
                                     onTap: () => editGroup(context, v.id, g),
                                   ),
                                 ListTile(
                                   leading: const Icon(Icons.add),
-                                  title: const Text('ගෘහ කණ්ඩායමක් එකතු කරන්න'),
+                                  title: Text(t.addHouseGroup),
                                   onTap: () => editGroup(context, v.id, null),
                                 ),
                               ],
@@ -99,19 +99,18 @@ Future<void> editVillage(BuildContext context, Village? v) async {
   final r = await showDialog<String>(
     context: context,
     builder: (c) => AlertDialog(
-      title: Text(v == null ? 'නව ගම්මානයක්' : 'ගම්මානය'),
+      title: Text(v == null ? c.l10n.newVillage : c.l10n.fVillage),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          TF(name, 'ගම්මානයේ නම *', autofocus: true),
-          TF(officer, 'සමීප අධීක්ෂණ නිලධාරී', hint: 'උදා: සමෘද්ධි සංවර්ධන නිලධාරී'),
+          TF(name, c.l10n.villageNameField, autofocus: true),
+          TF(officer, c.l10n.supervisingOfficerField, hint: c.l10n.supervisingOfficerHint),
         ],
       ),
       actions: [
-        if (v != null)
-          TextButton(onPressed: () => Navigator.pop(c, 'delete'), child: const Text('ඉවත් කරන්න')),
-        TextButton(onPressed: () => Navigator.pop(c), child: const Text('අවලංගු')),
-        FilledButton(onPressed: () => Navigator.pop(c, 'save'), child: const Text('සුරකින්න')),
+        if (v != null) TextButton(onPressed: () => Navigator.pop(c, 'delete'), child: Text(c.l10n.remove)),
+        TextButton(onPressed: () => Navigator.pop(c), child: Text(c.l10n.cancel)),
+        FilledButton(onPressed: () => Navigator.pop(c, 'save'), child: Text(c.l10n.save)),
       ],
     ),
   );
@@ -120,7 +119,7 @@ Future<void> editVillage(BuildContext context, Village? v) async {
           ..where((g) => g.villageId.equals(v.id) & g.deletedAt.isNull()))
         .get();
     if (groups.isNotEmpty) {
-      if (context.mounted) snack(context, 'මුලින්ම මෙහි ගෘහ කණ්ඩායම් ඉවත් කරන්න');
+      if (context.mounted) snack(context, context.l10n.removeGroupsFirst);
       return;
     }
     await db.softDelete(db.villages, v.id);
@@ -150,23 +149,22 @@ Future<void> editGroup(BuildContext context, String villageId, HouseGroup? g) as
   final r = await showDialog<String>(
     context: context,
     builder: (c) => AlertDialog(
-      title: Text(g == null ? 'නව ගෘහ කණ්ඩායමක්' : 'ගෘහ කණ්ඩායම'),
+      title: Text(g == null ? c.l10n.newHouseGroup : c.l10n.fHouseGroup),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TF(code, 'කණ්ඩායම් අංකය *', hint: 'උදා: 1001/01', autofocus: true),
-            TF(leader, 'කණ්ඩායම් නායකයා'),
-            TF(phone, 'නායකයාගේ දුරකථනය', phone: true),
-            TF(expected, 'දළ ඉඩම් / නිවාස ගණන', number: true, hint: 'සමීක්ෂණ ප්‍රගතිය සඳහා'),
+            TF(code, c.l10n.groupNoField, hint: c.l10n.groupNoHint, autofocus: true),
+            TF(leader, c.l10n.groupLeaderField),
+            TF(phone, c.l10n.leaderPhoneField, phone: true),
+            TF(expected, c.l10n.expectedLandsField, number: true, hint: c.l10n.expectedLandsHint),
           ],
         ),
       ),
       actions: [
-        if (g != null)
-          TextButton(onPressed: () => Navigator.pop(c, 'delete'), child: const Text('ඉවත් කරන්න')),
-        TextButton(onPressed: () => Navigator.pop(c), child: const Text('අවලංගු')),
-        FilledButton(onPressed: () => Navigator.pop(c, 'save'), child: const Text('සුරකින්න')),
+        if (g != null) TextButton(onPressed: () => Navigator.pop(c, 'delete'), child: Text(c.l10n.remove)),
+        TextButton(onPressed: () => Navigator.pop(c), child: Text(c.l10n.cancel)),
+        FilledButton(onPressed: () => Navigator.pop(c, 'save'), child: Text(c.l10n.save)),
       ],
     ),
   );
@@ -175,7 +173,7 @@ Future<void> editGroup(BuildContext context, String villageId, HouseGroup? g) as
           ..where((l) => l.houseGroupId.equals(g.id) & l.deletedAt.isNull()))
         .get();
     if (lands.isNotEmpty) {
-      if (context.mounted) snack(context, 'මෙම කණ්ඩායමේ ඉඩම් ${lands.length} ක් ඇත — ඉවත් කළ නොහැක');
+      if (context.mounted) snack(context, context.l10n.groupHasLands(lands.length));
       return;
     }
     await db.softDelete(db.houseGroups, g.id);

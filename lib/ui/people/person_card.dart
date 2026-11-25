@@ -11,6 +11,7 @@ import '../forms/person_form.dart';
 import '../land/land_card.dart';
 import '../widgets/brand.dart';
 import '../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 class _PersonView {
   _PersonView(this.p, this.family, this.building, this.land, this.events, this.linkedLands, this.members);
@@ -70,12 +71,14 @@ class _PersonCardState extends State<PersonCard> {
         final v = snap.data;
         if (v == null) {
           return BrandPage(
-            title: 'පුද්ගලයා',
+            title: context.l10n.person,
             body: snap.connectionState == ConnectionState.waiting
                 ? const Center(child: CircularProgressIndicator())
-                : const EmptyHint('හමු නොවීය'),
+                : EmptyHint(context.l10n.notFound),
           );
         }
+        final t = context.l10n;
+        String title(String list) => PickRegistry.instance.def(list).title;
         final p = v.p;
         final now = DateTime.now();
         final age = p.dob == null ? null : ageOn(p.dob!, now);
@@ -106,7 +109,7 @@ class _PersonCardState extends State<PersonCard> {
               const SizedBox(width: 12),
               Expanded(
                 child: Wrap(spacing: 6, runSpacing: 6, children: [
-                  if (age != null) _whitePill('වයස $age'),
+                  if (age != null) _whitePill(t.ageN(age)),
                   if (p.gender != null) _whitePill(pl(PL.gender, p.gender)),
                   _whitePill(pl(PL.personStatus, p.status)),
                 ]),
@@ -122,44 +125,44 @@ class _PersonCardState extends State<PersonCard> {
                   icon: Icons.badge_rounded,
                   color: Brand.slate,
                   title: _showNic ? p.nic! : maskNic(p.nic),
-                  subtitle: parseNic(p.nic!).isValid ? 'ජාතික හැඳුනුම්පත' : '⚠ වලංගු නැති අංකයකි',
+                  subtitle: parseNic(p.nic!).isValid ? t.nicCard : t.nicInvalidNumber,
                   trailing: IconButton(
                     icon: Icon(_showNic ? Icons.visibility_off_rounded : Icons.visibility_rounded, color: Brand.muted),
                     onPressed: () => setState(() => _showNic = !_showNic),
                   ),
                 ),
               SectionCard(
-                title: 'පුද්ගලික තොරතුරු',
+                title: t.personalDetails,
                 icon: Icons.person_rounded,
                 padding: const EdgeInsets.fromLTRB(0, 12, 0, 6),
                 children: [
-                  InfoRow('සම්පූර්ණ නම', p.fullName),
-                  InfoRow('මුලකුරු සහිත නම', p.initialsName),
-                  InfoRow('උපන් දිනය', p.dob == null ? null : dateFmt.format(p.dob!)),
-                  InfoRow('ජාතිය', p.ethnicity == null ? null : pl(PL.ethnicity, p.ethnicity)),
-                  InfoRow('ආගම', p.religion == null ? null : pl(PL.religion, p.religion)),
-                  InfoRow('විවාහක තත්ත්වය', p.civilStatus == null ? null : pl(PL.civilStatus, p.civilStatus)),
-                  InfoRow('ඡන්ද හිමි', p.isVoter == null ? null : pl(PL.yesNoUnknown, p.isVoter)),
-                  InfoRow('දුරකථනය', p.phone),
+                  InfoRow(t.fFullName, p.fullName),
+                  InfoRow(t.fNameWithInitials, p.initialsName),
+                  InfoRow(t.fDob, p.dob == null ? null : dateFmt.format(p.dob!)),
+                  InfoRow(title(PL.ethnicity), p.ethnicity == null ? null : pl(PL.ethnicity, p.ethnicity)),
+                  InfoRow(title(PL.religion), p.religion == null ? null : pl(PL.religion, p.religion)),
+                  InfoRow(title(PL.civilStatus), p.civilStatus == null ? null : pl(PL.civilStatus, p.civilStatus)),
+                  InfoRow(t.fVoter, p.isVoter == null ? null : pl(PL.yesNoUnknown, p.isVoter)),
+                  InfoRow(t.phone, p.phone),
                 ],
               ),
               SectionCard(
-                title: 'අධ්‍යාපනය හා රැකියාව',
+                title: t.eduAndWork,
                 icon: Icons.school_rounded,
                 color: Brand.slate,
                 padding: const EdgeInsets.fromLTRB(0, 12, 0, 6),
                 children: [
-                  InfoRow('අධ්‍යාපනය', p.education == null ? null : pl(PL.education, p.education)),
-                  InfoRow('ශ්‍රේණිය', p.schoolGrade),
-                  InfoRow('රැකියාව', p.occupation == null ? null : pl(PL.occupation, p.occupation)),
-                  InfoRow('රැකියා ස්ථානය', p.workplace),
-                  InfoRow('ආබාධ', p.disability == null ? null : pl(PL.disability, p.disability)),
-                  InfoRow('රෝග', p.chronicIllness),
-                  InfoRow('සටහන්', p.notes),
+                  InfoRow(title(PL.education), p.education == null ? null : pl(PL.education, p.education)),
+                  InfoRow(t.fGrade, p.schoolGrade),
+                  InfoRow(title(PL.occupation), p.occupation == null ? null : pl(PL.occupation, p.occupation)),
+                  InfoRow(t.fWorkplace, p.workplace),
+                  InfoRow(title(PL.disability), p.disability == null ? null : pl(PL.disability, p.disability)),
+                  InfoRow(t.fIllnesses, p.chronicIllness),
+                  InfoRow(t.notes, p.notes),
                 ],
               ),
               if (v.land != null) ...[
-                const SectionTitle('ජීවත් වන ස්ථානය'),
+                SectionTitle(t.livesAt),
                 ListCard(
                   icon: Icons.home_rounded,
                   color: Brand.gold,
@@ -169,7 +172,7 @@ class _PersonCardState extends State<PersonCard> {
                 ),
               ],
               if (v.members.isNotEmpty) ...[
-                const SectionTitle('පවුලේ අනෙක් අය'),
+                SectionTitle(t.otherFamilyMembers),
                 for (final m in v.members)
                   ListCard(
                     icon: m.gender == 'f' ? Icons.woman_rounded : Icons.man_rounded,
@@ -177,30 +180,30 @@ class _PersonCardState extends State<PersonCard> {
                     title: m.fullName,
                     subtitle: [
                       pl(PL.relation, m.relation),
-                      if (m.dob != null) 'වයස ${ageOn(m.dob!, now)}',
+                      if (m.dob != null) t.ageN(ageOn(m.dob!, now)),
                     ].join(' • '),
                     onTap: () => Navigator.of(context)
                         .pushReplacement(MaterialPageRoute(builder: (_) => PersonCard(personId: m.id))),
                   ),
               ],
               if (v.linkedLands.isNotEmpty) ...[
-                const SectionTitle('සම්බන්ධ ඉඩම්'),
+                SectionTitle(t.linkedLands),
                 for (final (party, land) in v.linkedLands)
                   ListCard(
                     icon: Icons.landscape_rounded,
                     color: Brand.olive,
                     title: land.name,
-                    subtitle: [pl(PL.partyRole, party.role), if (party.share != null) 'කොටස ${party.share}'].join(' • '),
+                    subtitle: [pl(PL.partyRole, party.role), if (party.share != null) t.shareN(party.share!)].join(' • '),
                     onTap: () => _open(LandCard(landId: land.id)),
                   ),
               ],
               if (v.events.isNotEmpty) ...[
-                const SectionTitle('පදිංචි ඉතිහාසය'),
+                SectionTitle(t.residenceHistory),
                 for (final e in v.events)
                   ListCard(
                     icon: Icons.history_rounded,
                     color: Brand.clay,
-                    title: residenceEventLabels[e.type] ?? e.type,
+                    title: t.residenceEvent(e.type),
                     subtitle: [dateFmt.format(e.date), if (e.note != null) e.note!].join(' • '),
                   ),
               ],

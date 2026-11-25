@@ -7,6 +7,8 @@
 /// years (day 61 is always March 1).
 library;
 
+import '../l10n/l10n.dart';
+
 class NicInfo {
   const NicInfo({required this.dob, required this.gender, required this.normalized});
   final DateTime dob;
@@ -18,12 +20,29 @@ class NicInfo {
   final String normalized;
 }
 
+/// Why a NIC number was rejected (localized by [NicResult.error]).
+enum NicError { empty, format, day, feb29, future, year }
+
 class NicResult {
-  const NicResult.ok(this.info) : error = null;
-  const NicResult.error(this.error) : info = null;
+  const NicResult.ok(this.info) : errorCode = null;
+  const NicResult.error(NicError this.errorCode) : info = null;
   final NicInfo? info;
-  final String? error;
+  final NicError? errorCode;
   bool get isValid => info != null;
+
+  /// Reason in the current language, or null when valid.
+  String? get error {
+    final t = L10n.current;
+    return switch (errorCode) {
+      null => null,
+      NicError.empty => t.nicEmpty,
+      NicError.format => t.nicBadFormat,
+      NicError.day => t.nicBadDay,
+      NicError.feb29 => t.nicFeb29,
+      NicError.future => t.nicFuture,
+      NicError.year => t.nicBadYear,
+    };
+  }
 }
 
 const _nicMonthDays = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -32,7 +51,7 @@ String normalizeNic(String raw) => raw.replaceAll(RegExp(r'\s'), '').toUpperCase
 
 NicResult parseNic(String raw, {DateTime? now}) {
   final nic = normalizeNic(raw);
-  if (nic.isEmpty) return const NicResult.error('හැඳුනුම්පත් අංකය හිස්ය');
+  if (nic.isEmpty) return const NicResult.error(NicError.empty);
 
   int year;
   int days;
@@ -43,8 +62,7 @@ NicResult parseNic(String raw, {DateTime? now}) {
     year = int.parse(nic.substring(0, 4));
     days = int.parse(nic.substring(4, 7));
   } else {
-    return const NicResult.error(
-        'වැරදි ආකෘතියකි — අංක 9 + V/X හෝ අංක 12 විය යුතුය');
+    return const NicResult.error(NicError.format);
   }
 
   var gender = 'm';
@@ -53,7 +71,7 @@ NicResult parseNic(String raw, {DateTime? now}) {
     days -= 500;
   }
   if (days < 1 || days > 366) {
-    return const NicResult.error('උපන් දින අංකය වලංගු නැත');
+    return const NicResult.error(NicError.day);
   }
 
   var month = 0;
@@ -64,16 +82,16 @@ NicResult parseNic(String raw, {DateTime? now}) {
   }
   final isLeap = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
   if (month == 1 && remaining == 29 && !isLeap) {
-    return const NicResult.error('පෙබරවාරි 29 — අධික අවුරුද්දක් නොවේ');
+    return const NicResult.error(NicError.feb29);
   }
   final dob = DateTime(year, month + 1, remaining);
 
   final today = now ?? DateTime.now();
   if (dob.isAfter(today)) {
-    return const NicResult.error('උපන් දිනය අනාගතයේ');
+    return const NicResult.error(NicError.future);
   }
   if (year < 1900) {
-    return const NicResult.error('උපන් වර්ෂය වලංගු නැත');
+    return const NicResult.error(NicError.year);
   }
   return NicResult.ok(NicInfo(dob: dob, gender: gender, normalized: nic));
 }

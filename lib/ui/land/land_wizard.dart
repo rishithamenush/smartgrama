@@ -9,8 +9,11 @@ import '../../theme.dart';
 import '../forms/land_form.dart';
 import '../widgets/brand.dart';
 import 'land_sections.dart';
+import '../../l10n/l10n.dart';
 
-const wizardSteps = ['ඉඩම', 'ගොඩනැගිලි', 'මිනිසුන්', 'ගස් හා බෝග', 'සතුන්', 'සමාලෝචනය'];
+/// Wizard step names in the current language.
+List<String> wizardSteps(AppLocalizations t) =>
+    [t.land, t.buildings, t.people, t.treesAndCrops, t.animals, t.review];
 
 /// Starts the "new place" flow: land form, then the step-by-step wizard.
 Future<void> startNewLand(NavigatorState nav) async {
@@ -46,14 +49,16 @@ class _LandWizardState extends State<LandWizard> {
   @override
   Widget build(BuildContext context) {
     final db = AppState.db;
+    final t = context.l10n;
+    final steps = wizardSteps(t);
     return StreamBuilder<LandBundle?>(
       stream: db.watchBundle(widget.landId),
       builder: (context, snap) {
         final b = snap.data;
-        final last = _step == wizardSteps.length - 1;
+        final last = _step == steps.length - 1;
         return BrandPage(
           title: b?.land.name ?? '',
-          subtitle: 'පියවර ${_step + 1} / ${wizardSteps.length} — ${wizardSteps[_step]}',
+          subtitle: t.stepOf(_step + 1, steps.length, steps[_step]),
           actions: [
             if (_step == 0 && b != null)
               HeaderAction(Icons.edit_rounded, () => push(context, LandForm(land: b.land))),
@@ -63,7 +68,7 @@ class _LandWizardState extends State<LandWizard> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(
-                  value: (_step + 1) / wizardSteps.length,
+                  value: (_step + 1) / steps.length,
                   minHeight: 6,
                   color: Brand.gold,
                   backgroundColor: Colors.white.withValues(alpha: 0.18),
@@ -71,8 +76,8 @@ class _LandWizardState extends State<LandWizard> {
               ),
               const SizedBox(height: 10),
               HeaderChips(items: [
-                for (var i = 0; i < wizardSteps.length; i++)
-                  ('${i + 1}. ${wizardSteps[i]}', _step == i, () => setState(() => _step = i)),
+                for (var i = 0; i < steps.length; i++)
+                  ('${i + 1}. ${steps[i]}', _step == i, () => setState(() => _step = i)),
               ]),
             ],
           ),
@@ -86,17 +91,17 @@ class _LandWizardState extends State<LandWizard> {
                     OutlinedButton.icon(
                       onPressed: () => setState(() => _step--),
                       icon: const Icon(Icons.arrow_back),
-                      label: const Text('ආපසු'),
+                      label: Text(t.back),
                     ),
                   const Spacer(),
                   if (!last)
                     FilledButton.icon(
                       onPressed: () => setState(() => _step++),
                       icon: const Icon(Icons.arrow_forward),
-                      label: Text('ඊළඟ: ${wizardSteps[_step + 1]}'),
+                      label: Text(t.nextStep(steps[_step + 1])),
                     )
                   else ...[
-                    TextButton(onPressed: () => Navigator.pop(context), child: const Text('අවසන්')),
+                    TextButton(onPressed: () => Navigator.pop(context), child: Text(t.finish)),
                     const SizedBox(width: 8),
                     FilledButton.icon(
                       onPressed: b == null
@@ -114,7 +119,7 @@ class _LandWizardState extends State<LandWizard> {
                               await startNewLand(nav);
                             },
                       icon: const Icon(Icons.add_home),
-                      label: const Text('ඊළඟ ස්ථානය'),
+                      label: Text(t.nextPlace),
                     ),
                   ],
                 ],

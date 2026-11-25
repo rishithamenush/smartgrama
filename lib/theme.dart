@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'l10n/l10n.dart';
+
 /// SmartGrama colour system: the reference brown is the major colour; every
 /// other colour is an earthy companion (sand, gold, terracotta, olive, slate)
 /// so the whole app reads as one family.
@@ -39,13 +41,19 @@ class Brand {
   );
 }
 
-const fontFamily = 'AbhayaLibre';
+/// Abhaya Libre (bundled) covers Sinhala and Latin but has no Tamil glyphs.
+/// Tamil therefore uses the platform's Tamil UI font (Noto Sans Tamil on
+/// Android, Tamil Sangam MN on iOS) for the whole screen, so a Tamil page
+/// is never a mix of two typefaces.
+String? fontFamilyFor(AppLang lang) => lang == AppLang.ta ? null : 'AbhayaLibre';
 
 /// Abhaya Libre's glyphs sit a little small next to Material's metrics, so
-/// all text is scaled by this on top of the user's text-size setting.
-const fontBoost = 1.1;
+/// its text is scaled by this on top of the user's text-size setting. The
+/// system Tamil font is already full size (and Tamil words are long).
+double fontBoostFor(AppLang lang) => lang == AppLang.ta ? 1.0 : 1.1;
 
-ThemeData buildTheme() {
+ThemeData buildTheme(AppLang lang) {
+  final fontFamily = fontFamilyFor(lang);
   const scheme = ColorScheme(
     brightness: Brightness.light,
     primary: Brand.brown,
@@ -85,7 +93,7 @@ ThemeData buildTheme() {
     fontFamily: fontFamily,
     scaffoldBackgroundColor: Brand.cream,
     dividerTheme: const DividerThemeData(color: Brand.line, space: 1),
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       backgroundColor: Brand.brown,
       foregroundColor: Colors.white,
       centerTitle: true,

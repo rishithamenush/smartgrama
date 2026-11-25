@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'data/bundle.dart';
 import 'data/database.dart';
 import 'data/picklists.dart';
+import 'l10n/l10n.dart';
 import 'security/key_store.dart';
 
 /// App-wide services, initialised once in [AppState.init].
@@ -21,6 +22,10 @@ class AppState {
 
   static final fontScale = ValueNotifier<double>(1.0);
 
+  /// Whether a display language has been saved (false on a fresh install,
+  /// which then shows the language screen first).
+  static bool languageChosen = false;
+
   /// Minutes in background before the PIN is asked again.
   static int autoLockMinutes = 2;
 
@@ -33,6 +38,17 @@ class AppState {
     await reloadPicks();
     fontScale.value = double.tryParse(await db.getSetting('font_scale') ?? '') ?? 1.0;
     autoLockMinutes = int.tryParse(await db.getSetting('auto_lock') ?? '') ?? 2;
+    final saved = AppLang.tryParse(await db.getSetting(L10n.settingKey));
+    languageChosen = saved != null;
+    L10n.lang.value =
+        saved ?? AppLang.tryParse(PlatformDispatcher.instance.locale.languageCode) ?? AppLang.si;
+  }
+
+  /// Switches the display language and remembers it.
+  static Future<void> setLanguage(AppLang lang) async {
+    L10n.lang.value = lang;
+    languageChosen = true;
+    await db.setSetting(L10n.settingKey, lang.code);
   }
 
   static Future<void> reloadPicks() async {

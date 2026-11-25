@@ -5,6 +5,7 @@ import '../reports/reports_screen.dart';
 import '../search/search_screen.dart';
 import 'dashboard.dart';
 import 'land_list_screen.dart';
+import '../../l10n/l10n.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -18,6 +19,7 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     return Scaffold(
       body: IndexedStack(
         index: _index,
@@ -33,12 +35,16 @@ class _HomeShellState extends State<HomeShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'මුල් පිටුව'),
-          NavigationDestination(icon: Icon(Icons.landscape_outlined), selectedIcon: Icon(Icons.landscape), label: 'ඉඩම්'),
-          NavigationDestination(icon: Icon(Icons.search), label: 'සෙවීම'),
-          NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map), label: 'සිතියම'),
-          NavigationDestination(icon: Icon(Icons.bar_chart_outlined), selectedIcon: Icon(Icons.bar_chart), label: 'වාර්තා'),
+        destinations: [
+          NavigationDestination(
+              icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: t.navHome),
+          NavigationDestination(
+              icon: const Icon(Icons.landscape_outlined), selectedIcon: const Icon(Icons.landscape), label: t.lands),
+          NavigationDestination(icon: const Icon(Icons.search), label: t.navSearch),
+          NavigationDestination(
+              icon: const Icon(Icons.map_outlined), selectedIcon: const Icon(Icons.map), label: t.navMap),
+          NavigationDestination(
+              icon: const Icon(Icons.bar_chart_outlined), selectedIcon: const Icon(Icons.bar_chart), label: t.navReports),
         ],
       ),
     );

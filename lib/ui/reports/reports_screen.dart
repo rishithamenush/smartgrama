@@ -13,17 +13,14 @@ import '../land/land_sections.dart';
 import '../people/person_card.dart';
 import '../widgets/brand.dart';
 import '../widgets/common.dart';
+import '../../l10n/l10n.dart';
 
 /// Hub: statistics, ready-made lists, data quality and Excel export.
 class ReportsScreen extends StatelessWidget {
   const ReportsScreen({super.key});
 
   Future<void> _export(BuildContext context) async {
-    if (!await confirm(
-        context,
-        'Excel ගොනුවේ සියලු පුද්ගලික තොරතුරු (නම්, හැඳුනුම්පත් අංක, දුරකථන) ඇතුළත් වේ.\n'
-        'නිල කටයුතු සඳහා පමණක්, ආරක්ෂිතව බෙදාගන්න.',
-        ok: 'අපනයනය කරන්න')) {
+    if (!await confirm(context, context.l10n.exportWarning, ok: context.l10n.exportAction)) {
       return;
     }
     final s = await AppState.db.loadSnapshot();
@@ -34,9 +31,10 @@ class ReportsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final db = AppState.db;
+    final t = context.l10n;
     return BrandPage(
-      title: 'වාර්තා',
-      subtitle: 'සංඛ්‍යාලේඛන, ලැයිස්තු, දත්ත පරීක්ෂාව',
+      title: t.navReports,
+      subtitle: t.reportsSubtitle,
       icon: Icons.bar_chart_rounded,
       body: StreamBuilder<Snapshot>(
         stream: db.watchSnapshot(),
@@ -50,17 +48,18 @@ class ReportsScreen extends StatelessWidget {
             crossAxisCount: 2,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: 0.95,
+            // Taller tiles when the officer chose bigger text.
+            childAspectRatio: 0.95 / MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.8),
             children: [
-              _HubTile(Icons.insights_rounded, Brand.slate, 'වසම් සංඛ්‍යාලේඛන',
-                  'ජනගහනය, නිවාස, ඉඩම්, ගස්, සතුන්', () => push(context, const StatsScreen())),
-              _HubTile(Icons.list_alt_rounded, Brand.terracotta, 'සූදානම් ලැයිස්තු',
-                  'ලැයිස්තු ${readyLists.length} • දත්ත ඇති $lists', () => push(context, const ReadyListsScreen())),
-              _HubTile(Icons.fact_check_rounded, Brand.gold, 'දත්ත පරීක්ෂාව',
-                  issues == 0 ? 'ගැටලු නැත' : 'පරීක්ෂා කිරීමට $issues', () => push(context, const QualityScreen()),
+              _HubTile(Icons.insights_rounded, Brand.slate, t.statsTitle, t.statsHubSub,
+                  () => push(context, const StatsScreen())),
+              _HubTile(Icons.list_alt_rounded, Brand.terracotta, t.readyListsTitle,
+                  t.readyListsHubSub(readyLists.length, lists), () => push(context, const ReadyListsScreen())),
+              _HubTile(Icons.fact_check_rounded, Brand.gold, t.qualityTitle,
+                  issues == 0 ? t.qualityNoIssues : t.qualityToCheckShort(issues),
+                  () => push(context, const QualityScreen()),
                   badge: issues == 0 ? null : '$issues'),
-              _HubTile(Icons.table_view_rounded, Brand.olive, 'Excel අපනයනය',
-                  'සියලු දත්ත එක් ගොනුවකට', () => _export(context)),
+              _HubTile(Icons.table_view_rounded, Brand.olive, t.excelExport, t.excelExportSub, () => _export(context)),
             ],
           );
         },
@@ -117,9 +116,11 @@ class _HubTile extends StatelessWidget {
                     ]),
                     const Spacer(),
                     Text(title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Brand.brownDark)),
                     const SizedBox(height: 2),
-                    Text(sub, maxLines: 2, style: const TextStyle(fontSize: 13, color: Brand.muted)),
+                    Text(sub, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, color: Brand.muted)),
                   ],
                 ),
               ),
@@ -134,7 +135,7 @@ class _HubTile extends StatelessWidget {
 // ===================================================================
 
 Widget _villageChips(Snapshot s, String? value, ValueChanged<String?> onChanged) => HeaderChips(items: [
-      ('මුළු වසම', value == null, () => onChanged(null)),
+      (L10n.current.wholeDivision, value == null, () => onChanged(null)),
       for (final v in s.villages) (v.name, value == v.id, () => onChanged(v.id)),
     ]);
 
@@ -170,7 +171,7 @@ class _StatsScreenState extends State<StatsScreen> {
       children: [
         for (final e in entries)
           BarRow(
-            e.key == 'unknown' ? 'සඳහන් කර නැත' : list == null ? e.key : pl(list, e.key),
+            e.key == 'unknown' ? L10n.current.notSpecified : list == null ? e.key : pl(list, e.key),
             e.value,
             max,
             color: color,
@@ -183,92 +184,96 @@ class _StatsScreenState extends State<StatsScreen> {
   @override
   Widget build(BuildContext context) {
     final db = AppState.db;
+    final t = context.l10n;
+    String title(String list) => PickRegistry.instance.def(list).title;
     return StreamBuilder<Snapshot>(
       stream: db.watchSnapshot(),
       builder: (context, snap) {
         final all = snap.data;
         if (all == null) {
-          return const BrandPage(title: 'වසම් සංඛ්‍යාලේඛන', body: Center(child: CircularProgressIndicator()));
+          return BrandPage(title: t.statsTitle, body: const Center(child: CircularProgressIndicator()));
         }
         final s = all.forVillage(_village);
         final st = computeStats(s);
         return BrandPage(
-          title: 'වසම් සංඛ්‍යාලේඛන',
-          subtitle: 'සජීවී — ඇතුළත් කරන විට ස්වයංක්‍රීයව යාවත්කාලීන වේ',
+          title: t.statsTitle,
+          subtitle: t.statsLive,
           headerChild: _villageChips(all, _village, (v) => setState(() => _village = v)),
           body: ListView(
             padding: const EdgeInsets.only(bottom: 40),
             children: [
               SectionCard(
-                title: 'සාරාංශය',
+                title: t.summary,
                 icon: Icons.dashboard_rounded,
                 children: [
                   const SizedBox(height: 4),
                   Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-                    MiniStat(Icons.groups_rounded, nf.format(st.population), 'ජනගහනය', Brand.brown),
-                    MiniStat(Icons.man_rounded, nf.format(st.male), 'පුරුෂ', Brand.slate),
-                    MiniStat(Icons.woman_rounded, nf.format(st.female), 'ස්ත්‍රී', Brand.terracotta),
+                    MiniStat(Icons.groups_rounded, nf.format(st.population), t.population, Brand.brown),
+                    MiniStat(Icons.man_rounded, nf.format(st.male), t.male, Brand.slate),
+                    MiniStat(Icons.woman_rounded, nf.format(st.female), t.female, Brand.terracotta),
                   ]),
                   const SizedBox(height: 12),
                   Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-                    MiniStat(Icons.family_restroom_rounded, nf.format(st.familiesCount), 'පවුල්', Brand.clay),
-                    MiniStat(Icons.home_rounded, nf.format(st.housesCount), 'නිවාස', Brand.gold),
-                    MiniStat(Icons.landscape_rounded, nf.format(st.landsCount), 'ඉඩම්', Brand.olive),
+                    MiniStat(Icons.family_restroom_rounded, nf.format(st.familiesCount), t.families, Brand.clay),
+                    MiniStat(Icons.home_rounded, nf.format(st.housesCount), t.houses, Brand.gold),
+                    MiniStat(Icons.landscape_rounded, nf.format(st.landsCount), t.lands, Brand.olive),
                   ]),
                   if (st.away > 0)
                     Padding(
                       padding: const EdgeInsets.only(top: 10),
-                      child: Center(child: Pill('තාවකාලිකව නැති ${st.away}', color: Brand.muted)),
+                      child: Center(child: Pill(t.awayN(st.away), color: Brand.muted)),
                     ),
                 ],
               ),
               ...[
-                _counter('වයස් කාණ්ඩ', Icons.cake_rounded, Brand.brown, st.ageGroup, null, order: ageGroups),
-                _counter('ජාතිය', Icons.diversity_3_rounded, Brand.clay, st.ethnicity, PL.ethnicity),
-                _counter('ආගම', Icons.temple_buddhist_rounded, Brand.gold, st.religion, PL.religion),
-                _counter('අධ්‍යාපනය', Icons.school_rounded, Brand.slate, st.education, PL.education),
-                _counter('රැකියාව', Icons.work_rounded, Brand.brownMid, st.occupation, PL.occupation),
-                _counter('ආබාධිත', Icons.accessible_rounded, Brand.terracotta, st.disability, PL.disability),
-                _counter('විවාහක තත්ත්වය', Icons.favorite_rounded, Brand.terracotta, st.civilStatus, PL.civilStatus),
-                _counter('ඡන්ද හිමි (18+)', Icons.how_to_vote_rounded, Brand.slate, st.voters, PL.yesNoUnknown),
-                _counter('සුබසාධන ප්‍රතිලාභ', Icons.volunteer_activism_rounded, Brand.olive, st.welfare, PL.welfare),
-                _counter('මාසික ආදායම', Icons.payments_rounded, Brand.gold, st.income, PL.incomeRange),
-                _counter('නිවසට අයිතිය', Icons.key_rounded, Brand.clay, st.tenure, PL.tenure),
-                _counter('ඉන්ධන', Icons.local_fire_department_rounded, Brand.terracotta, st.fuel, PL.cookingFuel),
-                _counter('නිවාස — ස්ථිරභාවය', Icons.home_rounded, Brand.gold, st.permanence, PL.permanence),
-                _counter('නිවාස — තත්ත්වය', Icons.construction_rounded, Brand.warn, st.condition, PL.condition),
-                _counter('ජල මූලාශ්‍රය', Icons.water_drop_rounded, Brand.slate, st.water, PL.water),
-                _counter('වැසිකිළි', Icons.wc_rounded, Brand.brownMid, st.toilet, PL.toilet),
-                _counter('විදුලිය', Icons.bolt_rounded, Brand.gold, st.electricity, PL.electricity),
-                _counter('සියලු ගොඩනැගිලි', Icons.home_work_rounded, Brand.clay, st.buildingType, PL.buildingType),
+                _counter(t.statAgeGroups, Icons.cake_rounded, Brand.brown, st.ageGroup, null, order: ageGroups),
+                _counter(title(PL.ethnicity), Icons.diversity_3_rounded, Brand.clay, st.ethnicity, PL.ethnicity),
+                _counter(title(PL.religion), Icons.temple_buddhist_rounded, Brand.gold, st.religion, PL.religion),
+                _counter(title(PL.education), Icons.school_rounded, Brand.slate, st.education, PL.education),
+                _counter(title(PL.occupation), Icons.work_rounded, Brand.brownMid, st.occupation, PL.occupation),
+                _counter(t.statDisabled, Icons.accessible_rounded, Brand.terracotta, st.disability, PL.disability),
+                _counter(title(PL.civilStatus), Icons.favorite_rounded, Brand.terracotta, st.civilStatus,
+                    PL.civilStatus),
+                _counter(t.statVoters, Icons.how_to_vote_rounded, Brand.slate, st.voters, PL.yesNoUnknown),
+                _counter(title(PL.welfare), Icons.volunteer_activism_rounded, Brand.olive, st.welfare, PL.welfare),
+                _counter(title(PL.incomeRange), Icons.payments_rounded, Brand.gold, st.income, PL.incomeRange),
+                _counter(title(PL.tenure), Icons.key_rounded, Brand.clay, st.tenure, PL.tenure),
+                _counter(title(PL.cookingFuel), Icons.local_fire_department_rounded, Brand.terracotta, st.fuel,
+                    PL.cookingFuel),
+                _counter(t.statHousesPermanence, Icons.home_rounded, Brand.gold, st.permanence, PL.permanence),
+                _counter(t.statHousesCondition, Icons.construction_rounded, Brand.warn, st.condition, PL.condition),
+                _counter(title(PL.water), Icons.water_drop_rounded, Brand.slate, st.water, PL.water),
+                _counter(t.statToilets, Icons.wc_rounded, Brand.brownMid, st.toilet, PL.toilet),
+                _counter(title(PL.electricity), Icons.bolt_rounded, Brand.gold, st.electricity, PL.electricity),
+                _counter(t.statAllBuildings, Icons.home_work_rounded, Brand.clay, st.buildingType, PL.buildingType),
               ].whereType<Widget>(),
               if (st.landsCount > 0)
                 SectionCard(
-                  title: 'ඉඩම්',
+                  title: t.lands,
                   icon: Icons.landscape_rounded,
                   color: Brand.olive,
                   padding: const EdgeInsets.fromLTRB(0, 12, 0, 6),
                   children: [
-                    InfoRow('මුළු ප්‍රමාණය', '${formatExtent(st.totalExtent)} (${formatHectares(st.totalExtent)})'),
-                    InfoRow('ආරවුල් ඇති ඉඩම්', '${st.disputes}'),
+                    InfoRow(t.statTotalExtent, '${formatExtent(st.totalExtent)} (${formatHectares(st.totalExtent)})'),
+                    InfoRow(t.landsWithDisputes, '${st.disputes}'),
                   ],
                 ),
               ...[
-                _counter('ඉඩම් — අයිතිය', Icons.gavel_rounded, Brand.olive, st.ownership, PL.ownership),
-                _counter('ඉඩම් — භාවිතය', Icons.grass_rounded, Brand.olive, st.landUse, PL.landUse),
-                _counter('ගස් (ගණනය කළ)', Icons.park_rounded, Brand.ok, st.treeCounts, PL.treeCountSpecies),
-                _counter('වටිනා / දැව ගස්', Icons.forest_rounded, Brand.ok, st.treeSingles, PL.treeSingleSpecies),
-                _counter('බෝග (පර්චස්)', Icons.agriculture_rounded, Brand.gold, st.cropPerches, PL.crop),
-                _counter('බෝග (පැළ)', Icons.spa_rounded, Brand.gold, st.cropPlants, PL.crop),
-                _counter('සතුන්', Icons.pets_rounded, Brand.slate, st.animals, PL.animal),
+                _counter(t.statLandsOwnership, Icons.gavel_rounded, Brand.olive, st.ownership, PL.ownership),
+                _counter(t.statLandsUse, Icons.grass_rounded, Brand.olive, st.landUse, PL.landUse),
+                _counter(t.statTreesCounted, Icons.park_rounded, Brand.ok, st.treeCounts, PL.treeCountSpecies),
+                _counter(t.valuableTimberTrees, Icons.forest_rounded, Brand.ok, st.treeSingles, PL.treeSingleSpecies),
+                _counter(t.statCropsPerches, Icons.agriculture_rounded, Brand.gold, st.cropPerches, PL.crop),
+                _counter(t.statCropsPlants, Icons.spa_rounded, Brand.gold, st.cropPlants, PL.crop),
+                _counter(t.animals, Icons.pets_rounded, Brand.slate, st.animals, PL.animal),
               ].whereType<Widget>(),
               if (st.dailyMilk > 0)
                 ListCard(
                   margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   icon: Icons.local_drink_rounded,
                   color: Brand.slate,
-                  title: 'දෛනික කිරි නිෂ්පාදනය',
-                  subtitle: 'ලීටර් ${st.dailyMilk.toStringAsFixed(1)}',
+                  title: t.statDailyMilk,
+                  subtitle: t.litresN(st.dailyMilk.toStringAsFixed(1)),
                 ),
             ],
           ),
@@ -313,8 +318,8 @@ class ReadyListsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final db = AppState.db;
     return BrandPage(
-      title: 'සූදානම් ලැයිස්තු',
-      subtitle: 'එක තට්ටුවකින් — Excel ලෙසද ලබාගත හැක',
+      title: context.l10n.readyListsTitle,
+      subtitle: context.l10n.readyListsSubtitle,
       body: StreamBuilder<Snapshot>(
         stream: db.watchSnapshot(),
         builder: (context, snap) {
@@ -364,7 +369,7 @@ class _ListResultScreenState extends State<ListResultScreen> {
         final hits = all == null ? <ListHit>[] : widget.list.run(all.forVillage(_village), DateTime.now());
         return BrandPage(
           title: widget.list.title,
-          subtitle: all == null ? null : 'ප්‍රතිඵල ${hits.length}',
+          subtitle: all == null ? null : context.l10n.resultsN(hits.length),
           actions: [
             if (hits.isNotEmpty)
               HeaderAction(Icons.ios_share_rounded,
@@ -389,7 +394,7 @@ class HitList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (hits.isEmpty) {
-      return ListView(children: const [EmptyHint('කිසිවක් නැත', icon: Icons.check_circle_outline_rounded)]);
+      return ListView(children: [EmptyHint(context.l10n.nothingHere, icon: Icons.check_circle_outline_rounded)]);
     }
     final color = iconColor?.$2 ?? Brand.brownMid;
     return ListView.builder(
@@ -435,8 +440,8 @@ class QualityScreen extends StatelessWidget {
         final sections = s == null ? <QualitySection>[] : qualityReport(s);
         final total = sections.fold<int>(0, (a, q) => a + q.hits.length);
         return BrandPage(
-          title: 'දත්ත පරීක්ෂාව',
-          subtitle: s == null ? null : (total == 0 ? 'සියල්ල හරි ✓' : 'පරීක්ෂා කිරීමට $total ක් ඇත'),
+          title: context.l10n.qualityTitle,
+          subtitle: s == null ? null : (total == 0 ? context.l10n.qualityAllGood : context.l10n.qualityToCheck(total)),
           body: s == null
               ? const Center(child: CircularProgressIndicator())
               : ListView(

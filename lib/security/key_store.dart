@@ -5,6 +5,8 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 
+import '../l10n/l10n.dart';
+
 /// Secrets kept in the platform keystore (Android Keystore / iOS Keychain):
 /// the database encryption key and the salted PIN hash.
 class KeyStore {
@@ -68,7 +70,7 @@ class KeyStore {
   static Future<bool> authenticateBiometric() async {
     try {
       return await LocalAuthentication().authenticate(
-        localizedReason: 'SmartGrama විවෘත කිරීමට',
+        localizedReason: L10n.current.biometricReason,
         biometricOnly: true,
       );
     } catch (_) {

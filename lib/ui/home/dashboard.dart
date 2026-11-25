@@ -13,6 +13,7 @@ import '../reports/reports_screen.dart';
 import '../settings/settings_screen.dart';
 import '../widgets/art.dart';
 import 'land_list_screen.dart';
+import '../../l10n/l10n.dart';
 
 /// මුල් පිටුව — greeting header with village scene, survey progress ring,
 /// the main "new place" action, division at a glance, shortcuts, data
@@ -49,6 +50,7 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     final nf = NumberFormat.decimalPattern();
     final st = computeStats(s);
     final progress = surveyProgress(s);
@@ -80,14 +82,16 @@ class _Body extends StatelessWidget {
                     children: [
                       const AppLogo(size: 40),
                       const SizedBox(width: 10),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('SmartGrama',
+                            const Text('SmartGrama',
                                 style: TextStyle(color: Brand.gold, fontWeight: FontWeight.w800, fontSize: 17)),
-                            Text('ග්‍රාම නිලධාරී වසම් තොරතුරු',
-                                style: TextStyle(color: Colors.white70, fontSize: 12)),
+                            Text(t.appTagline,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: Colors.white70, fontSize: 12)),
                           ],
                         ),
                       ),
@@ -98,9 +102,11 @@ class _Body extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 18),
-                  Text('${timeGreeting(now)},',
+                  Text('${timeGreeting(t, now)},',
                       style: const TextStyle(color: Colors.white70, fontSize: 15)),
-                  Text(officer.isEmpty ? 'ආයුබෝවන්!' : 'ආයුබෝවන් $officer',
+                  Text(officer.isEmpty ? t.welcome : t.welcomeName(officer),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 6),
                   Text(
@@ -108,6 +114,8 @@ class _Body extends StatelessWidget {
                       if (division != null) '${division!.code} — ${division!.name}',
                       if ((division?.dsDivision ?? '').isNotEmpty) division!.dsDivision,
                     ].join('  •  '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: Colors.white, fontSize: 14),
                   ),
                   const SizedBox(height: 8),
@@ -120,7 +128,7 @@ class _Body extends StatelessWidget {
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       const Icon(Icons.calendar_today_rounded, size: 14, color: Brand.goldLight),
                       const SizedBox(width: 6),
-                      Text(sinhalaDate(now), style: const TextStyle(color: Brand.goldLight, fontSize: 12)),
+                      Text(L10n.longDate(now), style: const TextStyle(color: Brand.goldLight, fontSize: 12)),
                     ]),
                   ),
                 ],
@@ -161,10 +169,9 @@ class _Body extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('දත්ත පරීක්ෂා කිරීමට $issues ක් ඇත',
+                        Text(t.dashIssues(issues),
                             style: const TextStyle(fontWeight: FontWeight.w700, color: Brand.warn)),
-                        const Text('හැඳුනුම්පත්, GPS, ඡායාරූප, අනුපිටපත්…',
-                            style: TextStyle(fontSize: 12, color: Brand.brownMid)),
+                        Text(t.dashIssuesHint, style: const TextStyle(fontSize: 12, color: Brand.brownMid)),
                       ]),
                     ),
                     const Icon(Icons.chevron_right, color: Brand.warn),
@@ -175,7 +182,7 @@ class _Body extends StatelessWidget {
           ),
 
         // ---------------------------------------------------------- at a glance
-        const _SectionHeader('වසම එක බැල්මෙන්', Icons.insights_rounded),
+        _SectionHeader(t.dashAtAGlance, Icons.insights_rounded),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: GridView.count(
@@ -187,39 +194,39 @@ class _Body extends StatelessWidget {
             crossAxisSpacing: 10,
             childAspectRatio: 0.92,
             children: [
-              _StatTile('ජනගහනය', nf.format(st.population), Icons.groups_rounded, Brand.brown,
-                  sub: 'පු ${st.male} • ස්ත්‍රී ${st.female}', onTap: () => push(context, const StatsScreen())),
-              _StatTile('පවුල්', nf.format(st.familiesCount), Icons.family_restroom_rounded, Brand.terracotta,
+              _StatTile(t.population, nf.format(st.population), Icons.groups_rounded, Brand.brown,
+                  sub: t.dashMaleFemale(st.male, st.female), onTap: () => push(context, const StatsScreen())),
+              _StatTile(t.families, nf.format(st.familiesCount), Icons.family_restroom_rounded, Brand.terracotta,
                   onTap: () => push(context, const StatsScreen())),
-              _StatTile('නිවාස', nf.format(st.housesCount), Icons.home_rounded, Brand.gold,
+              _StatTile(t.houses, nf.format(st.housesCount), Icons.home_rounded, Brand.gold,
                   onTap: () => push(context, const StatsScreen())),
-              _StatTile('ඉඩම්', nf.format(st.landsCount), Icons.landscape_rounded, Brand.olive,
+              _StatTile(t.lands, nf.format(st.landsCount), Icons.landscape_rounded, Brand.olive,
                   onTap: () => onOpenTab(1)),
-              _StatTile('ගස්', nf.format(st.treesTotal), Icons.park_rounded, Brand.ok,
+              _StatTile(t.trees, nf.format(st.treesTotal), Icons.park_rounded, Brand.ok,
                   onTap: () => push(context, const StatsScreen())),
-              _StatTile('සතුන්', nf.format(st.animalsTotal), Icons.pets_rounded, Brand.slate,
+              _StatTile(t.animals, nf.format(st.animalsTotal), Icons.pets_rounded, Brand.slate,
                   onTap: () => push(context, const StatsScreen())),
             ],
           ),
         ),
 
         // ---------------------------------------------------------- shortcuts
-        const _SectionHeader('ඉක්මන් ප්‍රවේශය', Icons.bolt_rounded),
+        _SectionHeader(t.dashQuickAccess, Icons.bolt_rounded),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(
             children: [
-              _Shortcut('සෙවීම', Icons.search_rounded, Brand.brownMid, () => onOpenTab(2)),
-              _Shortcut('සිතියම', Icons.map_rounded, Brand.olive, () => onOpenTab(3)),
-              _Shortcut('ලැයිස්තු', Icons.list_alt_rounded, Brand.terracotta,
+              _Shortcut(t.navSearch, Icons.search_rounded, Brand.brownMid, () => onOpenTab(2)),
+              _Shortcut(t.navMap, Icons.map_rounded, Brand.olive, () => onOpenTab(3)),
+              _Shortcut(t.dashLists, Icons.list_alt_rounded, Brand.terracotta,
                   () => push(context, const ReadyListsScreen())),
-              _Shortcut('වාර්තා', Icons.bar_chart_rounded, Brand.slate, () => onOpenTab(4)),
+              _Shortcut(t.navReports, Icons.bar_chart_rounded, Brand.slate, () => onOpenTab(4)),
             ],
           ),
         ),
 
         // ---------------------------------------------------------- villages
-        const _SectionHeader('ගම්මාන අනුව ප්‍රගතිය', Icons.holiday_village_rounded),
+        _SectionHeader(t.dashVillageProgress, Icons.holiday_village_rounded),
         Card(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           child: Padding(
@@ -240,17 +247,14 @@ class _Body extends StatelessWidget {
                     _GroupRow(p, onTap: () => push(context, LandListScreen(initialGroupId: p.group.id))),
                 ],
                 if (s.villages.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(8),
-                    child: Text('ගම්මාන තවම නැත — සැකසුම් වලින් එකතු කරන්න.'),
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Text(t.dashNoVillages),
                   ),
                 if (s.groups.any((g) => g.expectedLands == null))
-                  const Padding(
-                    padding: EdgeInsets.only(top: 10),
-                    child: Text(
-                      'ඉඟිය: සැකසුම් → ගම්මාන හා ගෘහ කණ්ඩායම් හි "දළ ඉඩම් ගණන" දුන් විට ප්‍රගතිය නිවැරදිව පෙන්වයි.',
-                      style: TextStyle(fontSize: 12, color: Brand.muted),
-                    ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Text(t.dashExpectedHint, style: const TextStyle(fontSize: 12, color: Brand.muted)),
                   ),
               ],
             ),
@@ -275,6 +279,7 @@ class _ProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -311,14 +316,14 @@ class _ProgressCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('සමීක්ෂණ ප්‍රගතිය',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Brand.brownDark)),
+                Text(t.surveyProgress,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Brand.brownDark)),
                 const SizedBox(height: 4),
-                Text('ස්ථාන $done / $target සම්පූර්ණයි', style: const TextStyle(color: Brand.brownMid)),
+                Text(t.placesDone(done, target), style: const TextStyle(color: Brand.brownMid)),
                 const SizedBox(height: 8),
                 Wrap(spacing: 6, runSpacing: 6, children: [
-                  _Pill(Icons.today_rounded, 'අද $today', Brand.gold),
-                  _Pill(Icons.verified_rounded, 'තහවුරු $verified', Brand.ok),
+                  _Pill(Icons.today_rounded, t.todayN(today), Brand.gold),
+                  _Pill(Icons.verified_rounded, t.verifiedN(verified), Brand.ok),
                 ]),
               ],
             ),
@@ -372,15 +377,15 @@ class _NewPlaceButton extends StatelessWidget {
                     child: const Icon(Icons.add_home_work_rounded, color: Brand.brownDark, size: 28),
                   ),
                   const SizedBox(width: 14),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('නව ස්ථානයක් ඇතුළත් කරන්න',
-                            style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700)),
-                        SizedBox(height: 2),
-                        Text('ඉඩම • ගොඩනැගිලි • පවුල් • ගස් • සතුන්',
-                            style: TextStyle(color: Brand.goldLight, fontSize: 12)),
+                        Text(context.l10n.newPlaceTitle,
+                            style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 2),
+                        Text(context.l10n.newPlaceSub,
+                            style: const TextStyle(color: Brand.goldLight, fontSize: 12)),
                       ],
                     ),
                   ),
@@ -438,7 +443,8 @@ class _StatTile extends StatelessWidget {
                   child: Text(value,
                       style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Brand.brownDark)),
                 ),
-                Text(label, style: const TextStyle(color: Brand.muted, fontSize: 13)),
+                Text(label,
+                    maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Brand.muted, fontSize: 13)),
                 if (sub != null)
                   Text(sub!, maxLines: 1, overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: Brand.muted, fontSize: 10)),
@@ -475,7 +481,11 @@ class _Shortcut extends StatelessWidget {
                 child: Icon(icon, color: color, size: 28),
               ),
               const SizedBox(height: 6),
-              Text(label, style: const TextStyle(fontSize: 12, color: Brand.brownDark)),
+              Text(label,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12, color: Brand.brownDark)),
             ]),
           ),
         ),

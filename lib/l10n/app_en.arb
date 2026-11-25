@@ -1,0 +1,1224 @@
+{
+  "@@locale": "en",
+  "appTagline": "Grama Niladhari division records",
+  "@appTagline": {
+    "description": "Subtitle under the app name"
+  },
+  "dbOpenError": "Could not open the database.\n\n{error}",
+  "@dbOpenError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "biometricReason": "To unlock SmartGrama",
+  "@biometricReason": {
+    "description": "System fingerprint/face prompt"
+  },
+  "yes": "Yes",
+  "no": "No",
+  "cancel": "Cancel",
+  "ok": "OK",
+  "save": "Save",
+  "remove": "Remove",
+  "add": "Add",
+  "edit": "Edit",
+  "confirmTitle": "Confirm",
+  "continueAction": "Continue",
+  "other": "Other",
+  "notes": "Notes",
+  "note": "Note",
+  "name": "Name",
+  "phoneNumber": "Phone number",
+  "phone": "Phone",
+  "searchHint": "Search",
+  "notFound": "Not found",
+  "nothingHere": "Nothing here",
+  "notSpecified": "Not specified",
+  "ageN": "Age {age}",
+  "@ageN": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "resultsN": "Results: {count}",
+  "@resultsN": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statusDraft": "Draft",
+  "@statusDraft": {
+    "description": "Land record status"
+  },
+  "statusComplete": "Complete",
+  "@statusComplete": {
+    "description": "Land record status"
+  },
+  "statusVerified": "Verified",
+  "@statusVerified": {
+    "description": "Land record status"
+  },
+  "land": "Land",
+  "lands": "Lands",
+  "buildings": "Buildings",
+  "families": "Families",
+  "family": "Family",
+  "persons": "People",
+  "@persons": {
+    "description": "Individual persons (counts, search sections)"
+  },
+  "person": "Person",
+  "people": "People",
+  "@people": {
+    "description": "Land card tab / wizard step"
+  },
+  "trees": "Trees",
+  "animals": "Animals",
+  "houses": "Houses",
+  "crops": "Crops",
+  "photos": "Photos",
+  "treesAndCrops": "Trees & crops",
+  "summary": "Summary",
+  "history": "History",
+  "review": "Review",
+  "population": "Population",
+  "male": "Male",
+  "female": "Female",
+  "valuableTrees": "Valuable trees",
+  "valuableTimberTrees": "Valuable / timber trees",
+  "countedTrees": "Counted trees",
+  "dilapidatedHouses": "Dilapidated houses",
+  "landsWithDisputes": "Lands with disputes",
+  "adultsWithoutNic": "Adults without an NIC number (16+)",
+  "language": "Language",
+  "languageChoose": "Choose your language",
+  "languageChangeLater": "You can change this later in Settings.",
+  "languageDataUnchanged": "Only the display language changes; your data stays the same.",
+  "navHome": "Home",
+  "navSearch": "Search",
+  "navMap": "Map",
+  "navReports": "Reports",
+  "pinEnter": "Enter your PIN",
+  "pinCreate": "Create a new 6-digit PIN",
+  "pinConfirm": "Enter the PIN again",
+  "pinMismatch": "The PINs don't match — try again",
+  "pinLockedOut": "5 wrong attempts — wait 30 seconds",
+  "pinWrong": "Wrong PIN",
+  "greetingMorning": "Good morning",
+  "greetingAfternoon": "Good afternoon",
+  "greetingEvening": "Good evening",
+  "welcome": "Welcome!",
+  "welcomeName": "Welcome, {name}",
+  "@welcomeName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "dashIssues": "{count, plural, =1{1 item needs checking} other{{count} items need checking}}",
+  "@dashIssues": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dashIssuesHint": "NICs, GPS, photos, duplicates…",
+  "dashAtAGlance": "Division at a glance",
+  "dashMaleFemale": "M {male} • F {female}",
+  "@dashMaleFemale": {
+    "placeholders": {
+      "male": {
+        "type": "int"
+      },
+      "female": {
+        "type": "int"
+      }
+    }
+  },
+  "dashQuickAccess": "Quick access",
+  "dashLists": "Lists",
+  "dashVillageProgress": "Progress by village",
+  "dashNoVillages": "No villages yet — add them in Settings.",
+  "dashExpectedHint": "Tip: fill in \"Approx. number of lands / houses\" under Settings → Villages & house groups to show accurate progress.",
+  "surveyProgress": "Survey progress",
+  "placesDone": "{done} of {target} places complete",
+  "@placesDone": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+  "todayN": "Today {count}",
+  "@todayN": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "verifiedN": "Verified {count}",
+  "@verifiedN": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "newPlaceTitle": "Add a new place",
+  "newPlaceSub": "Land • Buildings • Families • Trees • Animals",
+  "landsSummary": "Lands {all} • Complete {done}",
+  "@landsSummary": {
+    "placeholders": {
+      "all": {
+        "type": "int"
+      },
+      "done": {
+        "type": "int"
+      }
+    }
+  },
+  "newPlace": "New place",
+  "allVillages": "All villages",
+  "allGroups": "All groups",
+  "landsEmpty": "No lands here.\nTap \"{button}\" to add one.",
+  "@landsEmpty": {
+    "placeholders": {
+      "button": {
+        "type": "String"
+      }
+    }
+  },
+  "searchSubtitle": "People, lands, buildings",
+  "searchFieldHint": "Name, NIC, land, deed number…",
+  "searchEmptyHint": "Type a name, NIC number, phone number,\nland name or deed number",
+  "searchNoResults": "Nothing found",
+  "mapSubtitle": "Lands, houses and valuable trees on the map",
+  "mapLandCounts": "Buildings {buildings} • People {persons} • Trees {trees} • Animals {animals}",
+  "@mapLandCounts": {
+    "placeholders": {
+      "buildings": {
+        "type": "int"
+      },
+      "persons": {
+        "type": "int"
+      },
+      "trees": {
+        "type": "int"
+      },
+      "animals": {
+        "type": "int"
+      }
+    }
+  },
+  "openLand": "Open land",
+  "mapNoGps": "No lands with GPS yet. Tap \"{button}\" when adding a land.",
+  "@mapNoGps": {
+    "placeholders": {
+      "button": {
+        "type": "String"
+      }
+    }
+  },
+  "reportsSubtitle": "Statistics, lists, data checks",
+  "exportWarning": "The Excel file contains all personal details (names, NIC numbers, phone numbers).\nShare it securely, for official work only.",
+  "exportAction": "Export",
+  "statsTitle": "Division statistics",
+  "statsHubSub": "Population, houses, lands, trees, animals",
+  "readyListsTitle": "Ready-made lists",
+  "readyListsHubSub": "{total} lists • {withData} with data",
+  "@readyListsHubSub": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "withData": {
+        "type": "int"
+      }
+    }
+  },
+  "qualityTitle": "Data checks",
+  "qualityNoIssues": "No issues",
+  "qualityToCheckShort": "{count} to check",
+  "@qualityToCheckShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "qualityToCheck": "{count} to check",
+  "@qualityToCheck": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "qualityAllGood": "All good ✓",
+  "excelExport": "Excel export",
+  "excelExportSub": "All data in one file",
+  "wholeDivision": "Whole division",
+  "statsLive": "Live — updates automatically as you enter data",
+  "awayN": "Temporarily away {count}",
+  "@awayN": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "statAgeGroups": "Age groups",
+  "statDisabled": "Disability",
+  "statVoters": "Voters (18+)",
+  "statHousesPermanence": "Houses — permanence",
+  "statHousesCondition": "Houses — condition",
+  "statToilets": "Toilets",
+  "statAllBuildings": "All buildings",
+  "statTotalExtent": "Total extent",
+  "statLandsOwnership": "Lands — ownership",
+  "statLandsUse": "Lands — use",
+  "statTreesCounted": "Trees (counted)",
+  "statCropsPerches": "Crops (perches)",
+  "statCropsPlants": "Crops (plants)",
+  "statDailyMilk": "Daily milk production",
+  "litresN": "{value} litres",
+  "@litresN": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "readyListsSubtitle": "One tap — also available as Excel",
+  "rlElderly60": "Aged 60 and over",
+  "rlAlone70": "Aged 70+ living alone",
+  "rlUnder5": "Children aged 5 and under",
+  "rlSchool": "Schoolchildren",
+  "rlDisabled": "Persons with disabilities",
+  "rlAway": "Abroad / temporarily away",
+  "rlWelfare": "Families receiving welfare benefits",
+  "rlTempHouses": "Temporary / semi-permanent houses",
+  "rlNoToilet": "Houses without a toilet",
+  "rlNoPower": "Houses without electricity",
+  "rlUnsafeWater": "Houses without safe water",
+  "rlStateLand": "Families on state / encroached land",
+  "rlMilk": "Families / lands with dairy animals",
+  "rlDogs": "Unvaccinated dogs",
+  "rlTimber": "Lands with timber / valuable trees",
+  "rlHazardTrees": "Hazardous trees",
+  "gradeN": "Grade {grade}",
+  "@gradeN": {
+    "placeholders": {
+      "grade": {
+        "type": "String"
+      }
+    }
+  },
+  "familyOf": "{name}'s family",
+  "@familyOf": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "familyNoHead": "Family (no head)",
+  "milkPerDay": "{value} L a day",
+  "@milkPerDay": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "dogsN": "Dogs: {count}",
+  "@dogsN": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "metresN": "{value} m",
+  "@metresN": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "lastVerifiedYear": "Last verified {year}",
+  "@lastVerifiedYear": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "qSameNic": "Same NIC number for several people",
+  "qInvalidNic": "Invalid NIC numbers",
+  "qNoDob": "People without a date of birth",
+  "qNoGps": "Lands without GPS",
+  "qPoorGps": "Lands with poor GPS accuracy (10 m+)",
+  "qNoHousePhoto": "Houses without photos",
+  "qDraft": "Lands still in draft",
+  "qStale": "Lands not re-verified for over a year",
+  "ckGps": "GPS location",
+  "ckExtent": "Land extent",
+  "ckOwner": "Owner",
+  "ckOwnerHint": "Add the owner from the \"{tab}\" tab",
+  "@ckOwnerHint": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "ckNoneHintBuildings": "If there are no buildings, tick \"none\"",
+  "ckHousePhotos": "House photos",
+  "ckHouseFamilies": "Families in houses",
+  "ckHouseFamiliesHint": "If a house is empty, set its use to \"{vacant}\"",
+  "@ckHouseFamiliesHint": {
+    "placeholders": {
+      "vacant": {
+        "type": "String"
+      }
+    }
+  },
+  "ckMembers": "Family members",
+  "ckNoneHintTrees": "If there are no trees, tick \"none\"",
+  "ckNoneHintAnimals": "If there are no animals, tick \"none\"",
+  "wGpsAccuracy": "GPS accuracy {metres} m — better to capture again",
+  "@wGpsAccuracy": {
+    "placeholders": {
+      "metres": {
+        "type": "int"
+      }
+    }
+  },
+  "wTooManyTrees": "{count} trees on a {extent} land — check the extent or the count",
+  "@wTooManyTrees": {
+    "placeholders": {
+      "extent": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wNoHead": "A family has no head selected",
+  "wManyHeads": "One family has {count} heads",
+  "@wManyHeads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wOlderThanHead": "{name} is older than the head — check the relationship",
+  "@wOlderThanHead": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "wNoDob": "{name} — no date of birth",
+  "@wNoDob": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "wNoNic": "{name} — no NIC number (age {age})",
+  "@wNoNic": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "wInvalidNic": "{name} — invalid NIC number",
+  "@wInvalidNic": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "wDobNicMismatch": "{name} — date of birth doesn't match the NIC",
+  "@wDobNicMismatch": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "wSameNic": "{first} and {second} — same NIC number",
+  "@wSameNic": {
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "second": {
+        "type": "String"
+      }
+    }
+  },
+  "nicEmpty": "The NIC number is empty",
+  "nicBadFormat": "Wrong format — must be 9 digits + V/X, or 12 digits",
+  "nicBadDay": "Invalid birth-day number",
+  "nicFeb29": "February 29 — not a leap year",
+  "nicFuture": "Date of birth is in the future",
+  "nicBadYear": "Invalid birth year",
+  "extentAcres": "A {value}",
+  "@extentAcres": {
+    "description": "Acres part of an A-R-P extent",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "extentRoods": "R {value}",
+  "@extentRoods": {
+    "description": "Roods part of an A-R-P extent",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "extentPerches": "P {value}",
+  "@extentPerches": {
+    "description": "Perches part of an A-R-P extent",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "extentHectares": "{value} ha",
+  "@extentHectares": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "unitArp": "A-R-P",
+  "@unitArp": {
+    "description": "Acres-roods-perches input mode"
+  },
+  "unitAcres": "Acres",
+  "unitRoods": "Roods",
+  "unitPerches": "Perches",
+  "unitHectares": "Hectares",
+  "fVillage": "Village",
+  "fHouseGroup": "House group",
+  "fLandName": "Land name",
+  "fAddress": "Address",
+  "fExtentPerches": "Extent (perches)",
+  "fExtent": "Extent",
+  "fOwnership": "Ownership",
+  "fOwners": "Owners",
+  "fDeedNo": "Deed no.",
+  "fDeedPermitNo": "Deed / permit no.",
+  "fPlanNo": "Plan no.",
+  "fLotNo": "Lot no.",
+  "fPlanLotNo": "Plan / lot no.",
+  "fScheme": "Settlement scheme",
+  "fUse": "Use",
+  "fSubdivision": "Subdivision",
+  "fNorth": "North",
+  "fEast": "East",
+  "fSouth": "South",
+  "fWest": "West",
+  "fDispute": "Dispute",
+  "fLatitude": "Latitude",
+  "fLongitude": "Longitude",
+  "fGpsAccuracyM": "GPS accuracy (m)",
+  "fStatus": "Status",
+  "fVerifiedOn": "Verified on",
+  "fVerified": "Verified",
+  "fType": "Type",
+  "fNumber": "No.",
+  "fFloors": "Floors",
+  "fSqft": "Sq. ft",
+  "fRooms": "Rooms",
+  "fYearBuilt": "Year built",
+  "fWater": "Water",
+  "fApproval": "Approval",
+  "fHead": "Head",
+  "fMembers": "Members",
+  "fIncomeSource": "Income source",
+  "fFuel": "Fuel",
+  "fWelfare": "Welfare",
+  "fSinceYear": "Resident since",
+  "fFullName": "Full name",
+  "fNameWithInitials": "Name with initials",
+  "fNic": "NIC",
+  "fDob": "Date of birth",
+  "fAge": "Age",
+  "fSex": "Sex",
+  "fRelation": "Relationship",
+  "fGrade": "Grade",
+  "fWorkplace": "Workplace",
+  "fVoter": "Voter",
+  "fIllnesses": "Illnesses",
+  "fBearing": "Bearing",
+  "fYoungTrees": "Young",
+  "fTotal": "Total",
+  "fGirthIn": "Girth (in)",
+  "fHeightFt": "Height (ft)",
+  "fHazardous": "Hazardous",
+  "fCrop": "Crop",
+  "fAmount": "Amount",
+  "fMaleAnimals": "Male",
+  "fFemaleAnimals": "Female",
+  "fYoungAnimals": "Young",
+  "fMilkPerDay": "Milk (L/day)",
+  "fVaccinated": "Vaccinated",
+  "fLastVaccination": "Last vaccination",
+  "fDetails": "Details",
+  "sheetPeople": "People",
+  "sheetTreesCounted": "Trees (counted)",
+  "sheetList": "List",
+  "landNew": "New land",
+  "landEdit": "Edit land",
+  "landNameRequired": "The land name is required",
+  "selectHouseGroup": "Select a house group",
+  "extentInvalid": "The land extent is not valid",
+  "arpOddConfirm": "A value is 4 roods or 40 perches or more. Save the total extent as {extent}?",
+  "@arpOddConfirm": {
+    "placeholders": {
+      "extent": {
+        "type": "String"
+      }
+    }
+  },
+  "deedDupConfirm": "Deed number \"{deed}\" is already recorded for the land \"{land}\". Save anyway?",
+  "@deedDupConfirm": {
+    "placeholders": {
+      "deed": {
+        "type": "String"
+      },
+      "land": {
+        "type": "String"
+      }
+    }
+  },
+  "villageGroupField": "Village / house group *",
+  "landNameField": "Land name *",
+  "landNameHint": "e.g. Koswatta",
+  "addressField": "Address / location description",
+  "subdivisionAllowed": "Subdivision allowed",
+  "ownersAddLater": "After saving the land, add owners and occupants in the \"{section}\" section.",
+  "@ownersAddLater": {
+    "placeholders": {
+      "section": {
+        "type": "String"
+      }
+    }
+  },
+  "boundaries": "Boundaries",
+  "hasDispute": "There is a dispute",
+  "disputeNote": "Dispute details",
+  "otherNotes": "Other notes",
+  "disputeExists": "Yes",
+  "gpsNotTaken": "GPS location not captured",
+  "gpsAccuracyPoor": "Accuracy {metres} m — poor, capture again",
+  "@gpsAccuracyPoor": {
+    "placeholders": {
+      "metres": {
+        "type": "int"
+      }
+    }
+  },
+  "gpsAccuracy": "Accuracy {metres} m",
+  "@gpsAccuracy": {
+    "placeholders": {
+      "metres": {
+        "type": "int"
+      }
+    }
+  },
+  "gpsRetake": "Retake",
+  "gpsTake": "Get GPS",
+  "gpsServiceOff": "Turn on the phone's Location (GPS)",
+  "gpsDenied": "No permission to get the location — allow it in Settings",
+  "gpsFailed": "Couldn't get GPS — go into the open and try again",
+  "photoFailed": "Couldn't take the photo: {error}",
+  "@photoFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "camera": "Camera",
+  "gallery": "Gallery",
+  "photoDeleteConfirm": "Remove this photo?",
+  "newItem": "New item",
+  "addNewItem": "Add a new item",
+  "pickLists": "Pick lists",
+  "pickListsSub": "Add types of trees, animals, crops and more",
+  "itemsN": "{count, plural, =1{1 item} other{{count} items}}",
+  "@itemsN": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addedByYou": "Added by you",
+  "shown": "Shown",
+  "hidden": "Hidden",
+  "customItemsNote": "Items you add show with the same name in every language.",
+  "landNotFound": "Land not found",
+  "landRemoved": "This land has been removed",
+  "stepByStep": "Step by step",
+  "landDeleteConfirm": "Remove this land and all its buildings, families, trees and animals?\n(Only if it was entered by mistake. It stays in the history.)",
+  "landDelete": "Remove land",
+  "percentComplete": "{percent}% complete",
+  "@percentComplete": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "forCompleteness": "For completeness",
+  "onThisLand": "On this land",
+  "completeness": "Information completeness",
+  "allSectionsComplete": "All sections complete 🎉",
+  "sectionsDone": "{done} of {total} sections complete.\nRemaining: {missing}",
+  "@sectionsDone": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "missing": {
+        "type": "String"
+      }
+    }
+  },
+  "nicDupElsewhere": "{nic} — also recorded elsewhere as {name} (duplicate?)",
+  "@nicDupElsewhere": {
+    "placeholders": {
+      "nic": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pleaseCheckN": "Please check ({count})",
+  "@pleaseCheckN": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "markCompleteConfirm": "{count, plural, =1{1 section is} other{{count} sections are}} still incomplete. Mark as \"{status}\"?",
+  "@markCompleteConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "markComplete": "Complete",
+  "@markComplete": {
+    "description": "Button that marks a land as complete"
+  },
+  "verify": "Verify",
+  "backToDraft": "Back to draft",
+  "landDetails": "Land details",
+  "noBuildingsOnLand": "No buildings on this land",
+  "roomsN": "Rooms {count}",
+  "@roomsN": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "familiesN": "Families {count}",
+  "@familiesN": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noPhotosWarning": "⚠ No photos",
+  "addHouseFirstConfirm": "To add a family, first add a house. Add a house now?",
+  "landParties": "People linked to the land",
+  "landPartiesHint": "Add owners, occupants, heirs and others here.",
+  "shareN": "Share {share}",
+  "@shareN": {
+    "placeholders": {
+      "share": {
+        "type": "String"
+      }
+    }
+  },
+  "outsideDivision": "Outside the division",
+  "addFamilyButton": "Family",
+  "@addFamilyButton": {
+    "description": "Short button label with a + icon"
+  },
+  "addMember": "Add a member",
+  "noFamiliesYet": "No families added yet. Tap the \"{button}\" button.",
+  "@noFamiliesYet": {
+    "placeholders": {
+      "button": {
+        "type": "String"
+      }
+    }
+  },
+  "countAction": "Count",
+  "bearingYoung": "Bearing {bearing} • Young {young}",
+  "@bearingYoung": {
+    "placeholders": {
+      "bearing": {
+        "type": "int"
+      },
+      "young": {
+        "type": "int"
+      }
+    }
+  },
+  "singleTree": "Single tree",
+  "girthInN": "Girth {value} in",
+  "@girthInN": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "heightFtN": "Height {value} ft",
+  "@heightFtN": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "hazardWarning": "⚠ Hazardous",
+  "addCropButton": "Crop",
+  "@addCropButton": {
+    "description": "Short button label with a + icon"
+  },
+  "noTreesOnLand": "No trees / crops on this land",
+  "animalCountsShort": "M {male} • F {female} • Y {young}",
+  "@animalCountsShort": {
+    "placeholders": {
+      "male": {
+        "type": "int"
+      },
+      "female": {
+        "type": "int"
+      },
+      "young": {
+        "type": "int"
+      }
+    }
+  },
+  "milkLitresPerDay": "Milk {value} L/day",
+  "@milkLitresPerDay": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "vaccinatedValue": "Vaccinated: {value}",
+  "@vaccinatedValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "noAnimalsOnLand": "No animals on this land",
+  "landPhotos": "Land photos",
+  "otherPhotos": "Building / tree photos",
+  "noHistory": "No history",
+  "entLandParty": "Person linked to land",
+  "entBuilding": "Building",
+  "entResidenceEvent": "Residence change",
+  "entTree": "Single tree",
+  "entCrop": "Crop",
+  "entPhoto": "Photo",
+  "actCreate": "Added",
+  "actUpdate": "Changed",
+  "actDelete": "Removed",
+  "stepOf": "Step {step} of {total} — {name}",
+  "@stepOf": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "back": "Back",
+  "nextStep": "Next: {name}",
+  "@nextStep": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "finish": "Finish",
+  "nextPlace": "Next place",
+  "evArrived": "Moved in",
+  "evLeft": "Moved out",
+  "evBirth": "Birth",
+  "evDeath": "Death",
+  "evAway": "Went away temporarily",
+  "evReturned": "Returned",
+  "nicDerived": "Date of birth {dob} • {sex} — from the NIC",
+  "@nicDerived": {
+    "placeholders": {
+      "dob": {
+        "type": "String"
+      },
+      "sex": {
+        "type": "String"
+      }
+    }
+  },
+  "nameRequired": "The name is required",
+  "nicInvalidConfirm": "The NIC number is not valid ({error}). Save anyway?",
+  "@nicInvalidConfirm": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "dobMismatchConfirm": "The date of birth entered doesn't match the NIC. Save anyway?",
+  "nicDupConfirm": "This NIC number is already in the register: {names}\n\nCheck whether the same person has been entered twice. Save anyway?",
+  "@nicDupConfirm": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "nicLaterNote": "Note: age {age} — add the NIC number later",
+  "@nicLaterNote": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "twoHeadsConfirm": "{name} is already the head. The family would have two heads. Save anyway?",
+  "@twoHeadsConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "olderThanHeadConfirm": "This person is older than the head ({name}). Is the relationship correct?",
+  "@olderThanHeadConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "newMember": "New member",
+  "removeIfMistake": "Remove if entered by mistake",
+  "personDeleteConfirm": "Only remove if entered by mistake.\nIf the person moved away or died, change \"{field}\" instead.\n\nRemove?",
+  "@personDeleteConfirm": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "fullNameField": "Full name *",
+  "nicField": "National Identity Card number",
+  "eduAndWork": "Education & employment",
+  "gradeSchoolField": "Grade / school",
+  "healthOther": "Health & other",
+  "chronicIllnessField": "Chronic illnesses (optional)",
+  "isVoterField": "Registered voter?",
+  "statusChangedOn": "Date of change: {date}",
+  "@statusChangedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "nameOrNicHint": "Name or NIC number",
+  "pickFromRegister": "Choose from the register",
+  "pickFromRegisterSub": "If they live in the division",
+  "outsideNameField": "Or name (if they live outside the division)",
+  "shareField": "Share (optional)",
+  "shareHint": "e.g. 1/2",
+  "pickPersonOrName": "Choose a person or enter a name",
+  "nicCard": "National Identity Card",
+  "nicInvalidNumber": "⚠ Invalid number",
+  "personalDetails": "Personal details",
+  "livesAt": "Lives at",
+  "otherFamilyMembers": "Other family members",
+  "linkedLands": "Linked lands",
+  "residenceHistory": "Residence history",
+  "selectBuildingType": "Select the building type",
+  "yearBuiltInvalid": "The year built is not valid",
+  "newBuilding": "New building",
+  "buildingDeleteConfirm": "Remove this building and the families living in it? (It stays in the history)",
+  "buildingNoField": "House / building no.",
+  "buildingNoHint": "Pradeshiya Sabha number, if any",
+  "floorsField": "Number of floors",
+  "floorAreaField": "Floor area (sq. ft)",
+  "roomsField": "Number of rooms",
+  "materials": "Construction materials",
+  "yearBuiltField": "Year built (approx.)",
+  "facilities": "Facilities",
+  "buildingApproval": "Building approval",
+  "housePhotoRequired": "A photo of the front of the house is required.",
+  "selectFamilyHouse": "Select the house the family lives in",
+  "sinceYearInvalid": "The year they moved in is not valid",
+  "newFamily": "New family",
+  "familyDetails": "Family details",
+  "familyDeleteConfirm": "Remove this family and its members? (It stays in the history)",
+  "livingBuildingField": "Building they live in *",
+  "sinceYearField": "Year they moved in",
+  "treeCountTitle": "Tree count ({count})",
+  "@treeCountTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "youngNotBearing": "Young / not bearing",
+  "addSpecies": "Add a species",
+  "otherSpecies": "Other species",
+  "timberHint": "Add valuable timber trees such as teak and mahogany separately as a \"{button}\", with the girth.",
+  "@timberHint": {
+    "placeholders": {
+      "button": {
+        "type": "String"
+      }
+    }
+  },
+  "selectTreeSpecies": "Select the tree species",
+  "girthInvalid": "The girth (inches) is not valid",
+  "treeDeleteConfirm": "Remove this tree? (If it was cut down, also leave a note)",
+  "girthField": "Girth at breast height (inches)",
+  "girthHint": "4½ ft above the ground",
+  "heightField": "Approx. height (ft)",
+  "treeAgeField": "Approx. age (years)",
+  "hazardousField": "Hazardous",
+  "hazardousHint": "Could fall on a house / power line",
+  "selectCrop": "Select the crop",
+  "newCrop": "New crop",
+  "cropDeleteConfirm": "Remove this crop?",
+  "selectAnimal": "Select the animal type",
+  "enterCount": "Enter the count",
+  "milkPerAnimalConfirm": "{litres} litres of milk per animal per day — is that correct?",
+  "@milkPerAnimalConfirm": {
+    "placeholders": {
+      "litres": {
+        "type": "String"
+      }
+    }
+  },
+  "addAnimals": "Add animals",
+  "recordDeleteConfirm": "Remove this record?",
+  "dailyMilkField": "Daily milk (litres)",
+  "rabiesVaccinated": "Vaccinated against rabies?",
+  "vaccinatedQuestion": "Vaccinated?",
+  "lastVaccinationDate": "Last vaccination date",
+  "lastVaccinationOn": "Last vaccination: {date}",
+  "@lastVaccinationOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "ownerFamily": "Owner family",
+  "villagesAndGroups": "Villages & house groups",
+  "addVillageButton": "Village",
+  "@addVillageButton": {
+    "description": "Short button label with a + icon"
+  },
+  "needOneGroup": "Add at least one village and one house group",
+  "structureEmpty": "Add the villages in your division. Then add house groups (e.g. 1001/01) to each village.",
+  "supervisingValue": "Supervising officer: {name}",
+  "@supervisingValue": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "leaderValue": "Leader: {name}",
+  "@leaderValue": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "landsN": "Lands {count}",
+  "@landsN": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addHouseGroup": "Add a house group",
+  "newVillage": "New village",
+  "villageNameField": "Village name *",
+  "supervisingOfficerField": "Supervising officer",
+  "supervisingOfficerHint": "e.g. Samurdhi Development Officer",
+  "removeGroupsFirst": "Remove the house groups here first",
+  "newHouseGroup": "New house group",
+  "groupNoField": "Group number *",
+  "groupNoHint": "e.g. 1001/01",
+  "groupLeaderField": "Group leader",
+  "leaderPhoneField": "Leader's phone",
+  "expectedLandsField": "Approx. number of lands / houses",
+  "expectedLandsHint": "For survey progress",
+  "groupHasLands": "This group has {count, plural, =1{1 land} other{{count} lands}} — it cannot be removed",
+  "@groupHasLands": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "codeNameRequired": "The division number and name are required",
+  "divisionDetails": "Division details",
+  "setupWelcome": "Welcome! First, enter the details of your Grama Niladhari division.",
+  "divisionNoField": "Division number *",
+  "divisionNoHint": "e.g. 1001",
+  "divisionNameField": "Division name *",
+  "divisionNameHint": "e.g. Haragama",
+  "dsDivisionField": "Divisional Secretariat division",
+  "dsDivisionHint": "e.g. Pathahewaheta",
+  "districtField": "District",
+  "districtHint": "e.g. Kandy",
+  "gnNameField": "Grama Niladhari name",
+  "settingsTitle": "Settings",
+  "settingsSubtitle": "Division, language, appearance, security, backup",
+  "division": "Division",
+  "divisionDetailsSub": "Number, name, officer",
+  "textSize": "Text size",
+  "sizeNormal": "Normal",
+  "sizeLarge": "Large",
+  "sizeXLarge": "Very large",
+  "security": "Security",
+  "changePin": "Change PIN",
+  "pinChanged": "PIN changed",
+  "biometric": "Fingerprint / face",
+  "biometricSub": "Unlock without the PIN",
+  "autoLock": "Auto-lock",
+  "lockImmediately": "Immediately",
+  "minutesN": "{count, plural, =1{1 minute} other{{count} minutes}}",
+  "@minutesN": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backup": "Backup",
+  "createBackup": "Create a backup",
+  "noBackupYet": "None yet — data will be lost if the phone is lost",
+  "lastBackup": "Last: {date}",
+  "@lastBackup": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreFromBackup": "Restore from backup",
+  "backupPassword": "Backup password",
+  "backupPasswordWarning": "The backup can't be opened without this password. Keep it safe.",
+  "password": "Password",
+  "passwordRepeat": "Repeat password",
+  "passwordMin": "At least 6 characters",
+  "passwordMismatch": "The passwords don't match",
+  "backupShareText": "SmartGrama encrypted backup",
+  "backupFailed": "Backup failed: {error}",
+  "@backupFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreConfirm": "Restoring removes all current data and keeps only the data in the backup. Continue?",
+  "restoreDone": "Restore successful",
+  "restoreFailed": "Restore failed: {error}",
+  "@restoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupPasswordTooShort": "The password must be at least 6 characters",
+  "backupWrongPassword": "Wrong password, or this is not a SmartGrama backup file",
+  "backupOtherVersion": "This backup was made with a different version ({version})",
+  "@backupOtherVersion": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "backupNotSmartGrama": "This is not a SmartGrama backup file",
+  "developer": "Developer (debug)",
+  "addDemoData": "Add demo data",
+  "testingOnly": "For testing only",
+  "demoDataAdded": "Demo data added",
+  "privacyNote": "All data is stored encrypted on this phone. Nothing is sent to the internet."
+}

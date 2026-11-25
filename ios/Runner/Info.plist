@@ -6,16 +6,22 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>si</string>
+		<string>en</string>
+		<string>ta</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>SmartGrama</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>ඉඩම්, ගොඩනැගිලි හා ගස්වල ස්ථානය සටහන් කිරීමට GPS භාවිත කරයි.</string>
+	<string>Uses GPS to record the location of lands, buildings and trees.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>නිවාස, ඉඩම් හා ගස්වල ඡායාරූප ගැනීමට කැමරාව භාවිත කරයි.</string>
+	<string>Uses the camera to take photos of houses, lands and trees.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>පවතින ඡායාරූප තෝරා ගැනීමට.</string>
+	<string>To choose existing photos.</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>SmartGrama ආරක්ෂිතව විවෘත කිරීමට.</string>
+	<string>To open SmartGrama securely.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

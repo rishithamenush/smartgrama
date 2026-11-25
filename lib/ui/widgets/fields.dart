@@ -9,6 +9,7 @@ import '../../data/device.dart';
 import '../../data/picklists.dart';
 import 'common.dart';
 import '../../theme.dart';
+import '../../l10n/l10n.dart';
 
 /// Single choice from a pick list. Short lists render as chips; long lists
 /// open a searchable sheet (with "add new" for editable lists).
@@ -104,23 +105,23 @@ class _PickSheetState extends State<_PickSheet> {
     final label = await showDialog<String>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('නව අයිතමයක්'),
+        title: Text(c.l10n.newItem),
         content: TextField(
           controller: ctrl,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'නම'),
+          decoration: InputDecoration(labelText: c.l10n.name),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('අවලංගු')),
-          FilledButton(
-              onPressed: () => Navigator.pop(c, ctrl.text.trim()), child: const Text('එකතු කරන්න')),
+          TextButton(onPressed: () => Navigator.pop(c), child: Text(c.l10n.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(c, ctrl.text.trim()), child: Text(c.l10n.add)),
         ],
       ),
     );
     if (label == null || label.isEmpty) return;
     final existing = PickRegistry.instance
         .options(widget.list)
-        .where((o) => o.label == label)
+        // Same name in any language means the option already exists.
+        .where((o) => [o.si, o.en, o.ta].any((x) => x.toLowerCase() == label.toLowerCase()))
         .firstOrNull;
     if (existing != null) {
       if (mounted) Navigator.pop(context, existing.code);
@@ -140,7 +141,7 @@ class _PickSheetState extends State<_PickSheet> {
     final def = PickRegistry.instance.def(widget.list);
     final options = PickRegistry.instance
         .options(widget.list)
-        .where((o) => _q.isEmpty || o.label.contains(_q))
+        .where((o) => _q.isEmpty || o.names.matches(_q))
         .toList();
     return DraggableScrollableSheet(
       expand: false,
@@ -154,7 +155,7 @@ class _PickSheetState extends State<_PickSheet> {
               children: [
                 Expanded(child: Text(def.title, style: Theme.of(context).textTheme.titleLarge)),
                 if (widget.current != null)
-                  TextButton(onPressed: () => Navigator.pop(context, ''), child: const Text('ඉවත් කරන්න')),
+                  TextButton(onPressed: () => Navigator.pop(context, ''), child: Text(context.l10n.remove)),
               ],
             ),
           ),
@@ -162,8 +163,8 @@ class _PickSheetState extends State<_PickSheet> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: TextField(
-                decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.search), hintText: 'සොයන්න', isDense: true),
+                decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search), hintText: context.l10n.searchHint, isDense: true),
                 onChanged: (v) => setState(() => _q = v.trim()),
               ),
             ),
@@ -183,7 +184,7 @@ class _PickSheetState extends State<_PickSheet> {
                 if (def.editable)
                   ListTile(
                     leading: const Icon(Icons.add),
-                    title: const Text('නව අයිතමයක් එකතු කරන්න'),
+                    title: Text(context.l10n.addNewItem),
                     onTap: _addNew,
                   ),
               ],
@@ -254,10 +255,10 @@ class CountStepper extends StatelessWidget {
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('අවලංගු')),
+          TextButton(onPressed: () => Navigator.pop(c), child: Text(c.l10n.cancel)),
           FilledButton(
               onPressed: () => Navigator.pop(c, int.tryParse(ctrl.text) ?? 0),
-              child: const Text('හරි')),
+              child: Text(c.l10n.ok)),
         ],
       ),
     );
@@ -376,12 +377,10 @@ class _GpsFieldState extends State<GpsField> {
                 children: [
                   Text(has
                       ? '${widget.lat!.toStringAsFixed(6)}, ${widget.lng!.toStringAsFixed(6)}'
-                      : 'GPS ස්ථානය ගෙන නැත'),
+                      : context.l10n.gpsNotTaken),
                   if (acc != null)
                     Text(
-                      poor
-                          ? 'නිරවද්‍යතාව මී. ${acc.round()} — අඩුයි, නැවත ගන්න'
-                          : 'නිරවද්‍යතාව මී. ${acc.round()}',
+                      poor ? context.l10n.gpsAccuracyPoor(acc.round()) : context.l10n.gpsAccuracy(acc.round()),
                       style: TextStyle(fontSize: 12, color: poor ? Brand.warn : cs.outline),
                     ),
                 ],
@@ -389,7 +388,7 @@ class _GpsFieldState extends State<GpsField> {
             ),
             if (has)
               IconButton(
-                tooltip: 'ඉවත් කරන්න',
+                tooltip: context.l10n.remove,
                 onPressed: () => widget.onChanged(null, null, null),
                 icon: const Icon(Icons.close),
               ),
@@ -398,7 +397,7 @@ class _GpsFieldState extends State<GpsField> {
               icon: _busy
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.my_location),
-              label: Text(has ? 'නැවත' : 'GPS ගන්න'),
+              label: Text(has ? context.l10n.gpsRetake : context.l10n.gpsTake),
             ),
           ],
         ),
@@ -425,7 +424,7 @@ class PhotoStrip extends StatelessWidget {
     try {
       await addPhoto(ownerType: ownerType, ownerId: ownerId, landId: landId, fromCamera: camera);
     } catch (e) {
-      if (context.mounted) snack(context, 'ඡායාරූපය ගැනීමට නොහැක: $e');
+      if (context.mounted) snack(context, context.l10n.photoFailed('$e'));
     }
   }
 
@@ -436,8 +435,8 @@ class PhotoStrip extends StatelessWidget {
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
-          _AddBox(icon: Icons.photo_camera, label: 'කැමරාව', onTap: () => _add(context, true)),
-          _AddBox(icon: Icons.photo_library, label: 'ගැලරිය', onTap: () => _add(context, false)),
+          _AddBox(icon: Icons.photo_camera, label: context.l10n.camera, onTap: () => _add(context, true)),
+          _AddBox(icon: Icons.photo_library, label: context.l10n.gallery, onTap: () => _add(context, false)),
           for (final p in photos)
             Padding(
               padding: const EdgeInsets.all(4),
@@ -477,7 +476,10 @@ class _AddBox extends StatelessWidget {
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [Icon(icon), Text(label, style: const TextStyle(fontSize: 12))],
+              children: [
+                Icon(icon),
+                Text(label, textAlign: TextAlign.center, maxLines: 2, style: const TextStyle(fontSize: 12)),
+              ],
             ),
           ),
         ),
@@ -496,7 +498,7 @@ Future<void> openPhoto(BuildContext context, Photo p) => Navigator.of(context).p
               IconButton(
                 icon: const Icon(Icons.delete_outline),
                 onPressed: () async {
-                  if (await confirm(c, 'මෙම ඡායාරූපය ඉවත් කරන්නද?', danger: true)) {
+                  if (await confirm(c, c.l10n.photoDeleteConfirm, danger: true)) {
                     await AppState.db.softDelete(AppState.db.photos, p.id, landId: p.landId);
                     if (c.mounted) Navigator.pop(c);
                   }
@@ -513,10 +515,12 @@ Future<void> openPhoto(BuildContext context, Photo p) => Navigator.of(context).p
 
 /// Bottom save bar used by all forms.
 class SaveBar extends StatelessWidget {
-  const SaveBar({super.key, required this.onSave, this.busy = false, this.label = 'සුරකින්න'});
+  const SaveBar({super.key, required this.onSave, this.busy = false, this.label});
   final VoidCallback onSave;
   final bool busy;
-  final String label;
+
+  /// Defaults to "Save" in the current language.
+  final String? label;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -533,7 +537,7 @@ class SaveBar extends StatelessWidget {
               icon: busy
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.check_circle_rounded),
-              label: Text(label),
+              label: Text(label ?? context.l10n.save),
             ),
           ),
         ),

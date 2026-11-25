@@ -7,6 +7,7 @@ import '../../data/picklists.dart';
 import '../widgets/common.dart';
 import '../widgets/fields.dart';
 import '../widgets/brand.dart';
+import '../../l10n/l10n.dart';
 
 // ===================================================================
 // Counted trees: one screen with ➕➖ for every species
@@ -77,8 +78,9 @@ class _TreeCountsScreenState extends State<TreeCountsScreen> {
   Widget build(BuildContext context) {
     final missingQuick = _quickSpecies.where((c) => !_rows.any((r) => r.species == c));
     final total = _rows.fold<int>(0, (s, r) => s + r.bearing + r.young);
+    final t = context.l10n;
     return Scaffold(
-      appBar: BrandAppBar(title: Text('ගස් ගණන් කිරීම ($total)')),
+      appBar: BrandAppBar(title: Text(t.treeCountTitle(total))),
       bottomNavigationBar: SaveBar(onSave: _save, busy: _busy),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 32),
@@ -93,14 +95,14 @@ class _TreeCountsScreenState extends State<TreeCountsScreen> {
                   children: [
                     Text(pl(PL.treeCountSpecies, r.species), style: Theme.of(context).textTheme.titleMedium),
                     CountStepper(
-                        label: 'ඵල දරන', value: r.bearing, onChanged: (v) => setState(() => r.bearing = v)),
+                        label: t.fBearing, value: r.bearing, onChanged: (v) => setState(() => r.bearing = v)),
                     CountStepper(
-                        label: 'ළපටි / ඵල නොදරන', value: r.young, onChanged: (v) => setState(() => r.young = v)),
+                        label: t.youngNotBearing, value: r.young, onChanged: (v) => setState(() => r.young = v)),
                   ],
                 ),
               ),
             ),
-          const SectionTitle('වර්ගයක් එකතු කරන්න'),
+          SectionTitle(t.addSpecies),
           Wrap(
             spacing: 8,
             runSpacing: 4,
@@ -113,7 +115,7 @@ class _TreeCountsScreenState extends State<TreeCountsScreen> {
                 ),
               ActionChip(
                 avatar: const Icon(Icons.list, size: 18),
-                label: const Text('වෙනත් වර්ගයක්'),
+                label: Text(t.otherSpecies),
                 onPressed: () async {
                   final c = await showPickSheet(context, PL.treeCountSpecies, null);
                   if (c != null && c.isNotEmpty) _addSpecies(c);
@@ -121,10 +123,9 @@ class _TreeCountsScreenState extends State<TreeCountsScreen> {
               ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.only(top: 16),
-            child: Text('තේක්ක, මහෝගනී වැනි වටිනා දැව ගස් "තනි ගසක්" ලෙස වට ප්‍රමාණය සමඟ වෙනම එකතු කරන්න.',
-                style: TextStyle(fontSize: 12)),
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Text(t.timberHint(t.singleTree), style: const TextStyle(fontSize: 12)),
           ),
         ],
       ),
@@ -160,12 +161,12 @@ class _SingleTreeFormState extends State<SingleTreeForm> {
 
   Future<void> _save() async {
     if (_species == null) {
-      snack(context, 'ගස් වර්ගය තෝරන්න');
+      snack(context, context.l10n.selectTreeSpecies);
       return;
     }
     final girth = dblOf(_girth);
     if (girth != null && (girth <= 0 || girth > 600)) {
-      snack(context, 'වට ප්‍රමාණය (අඟල්) වලංගු නැත');
+      snack(context, context.l10n.girthInvalid);
       return;
     }
     setState(() => _busy = true);
@@ -192,15 +193,16 @@ class _SingleTreeFormState extends State<SingleTreeForm> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       appBar: BrandAppBar(
-        title: Text(t == null ? 'තනි ගසක්' : pl(PL.treeSingleSpecies, t!.species)),
+        title: Text(t == null ? l10n.singleTree : pl(PL.treeSingleSpecies, t!.species)),
         actions: [
           if (t != null)
             IconButton(
               icon: const Icon(Icons.delete_outline),
               onPressed: () async {
-                if (await confirm(context, 'මෙම ගස ඉවත් කරන්නද? (කපා ඉවත් කළා නම් සටහනක් ද තබන්න)', danger: true)) {
+                if (await confirm(context, l10n.treeDeleteConfirm, danger: true)) {
                   await db.softDelete(db.trees, t!.id, landId: widget.landId);
                   if (context.mounted) Navigator.pop(context);
                 }
@@ -217,17 +219,17 @@ class _SingleTreeFormState extends State<SingleTreeForm> {
               value: _species,
               required: true,
               onChanged: (v) => setState(() => _species = v)),
-          TF(_girth, 'පපු උසින් වට ප්‍රමාණය (අඟල්)', decimal: true, hint: 'බිම සිට අඩි 4½ උසින්'),
+          TF(_girth, l10n.girthField, decimal: true, hint: l10n.girthHint),
           Row(children: [
-            Expanded(child: TF(_height, 'දළ උස (අඩි)', decimal: true)),
+            Expanded(child: TF(_height, l10n.heightField, decimal: true)),
             const SizedBox(width: 8),
-            Expanded(child: TF(_age, 'දළ වයස (අවුරුදු)', number: true)),
+            Expanded(child: TF(_age, l10n.treeAgeField, number: true)),
           ]),
           PickField(list: PL.treeCondition, value: _condition, onChanged: (v) => setState(() => _condition = v)),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('අනතුරුදායකයි'),
-            subtitle: const Text('නිවසකට / විදුලි රැහැනකට වැටිය හැක'),
+            title: Text(l10n.hazardousField),
+            subtitle: Text(l10n.hazardousHint),
             value: _hazard,
             onChanged: (v) => setState(() => _hazard = v),
           ),
@@ -239,13 +241,13 @@ class _SingleTreeFormState extends State<SingleTreeForm> {
               _lng = b;
             }),
           ),
-          const SectionTitle('ඡායාරූප'),
+          SectionTitle(l10n.photos),
           StreamBuilder<List<Photo>>(
             stream: (db.select(db.photos)..where((p) => p.ownerId.equals(_id) & p.deletedAt.isNull())).watch(),
             builder: (c, s) =>
                 PhotoStrip(ownerType: 'tree', ownerId: _id, landId: widget.landId, photos: s.data ?? const []),
           ),
-          TF(_note, 'සටහන', maxLines: 2),
+          TF(_note, l10n.note, maxLines: 2),
         ],
       ),
     );
@@ -279,7 +281,7 @@ class _CropFormState extends State<CropForm> {
 
   Future<void> _save() async {
     if (_crop == null) {
-      snack(context, 'බෝගය තෝරන්න');
+      snack(context, context.l10n.selectCrop);
       return;
     }
     setState(() => _busy = true);
@@ -305,15 +307,16 @@ class _CropFormState extends State<CropForm> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     return Scaffold(
       appBar: BrandAppBar(
-        title: Text(c == null ? 'නව බෝගයක්' : pl(PL.crop, c!.crop)),
+        title: Text(c == null ? t.newCrop : pl(PL.crop, c!.crop)),
         actions: [
           if (c != null)
             IconButton(
               icon: const Icon(Icons.delete_outline),
               onPressed: () async {
-                if (await confirm(context, 'මෙම බෝගය ඉවත් කරන්නද?', danger: true)) {
+                if (await confirm(context, t.cropDeleteConfirm, danger: true)) {
                   await db.softDelete(db.crops, c!.id, landId: widget.landId);
                   if (context.mounted) Navigator.pop(context);
                 }
@@ -326,12 +329,12 @@ class _CropFormState extends State<CropForm> {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
           PickField(list: PL.crop, value: _crop, required: true, onChanged: (v) => setState(() => _crop = v)),
-          TF(_value, 'ප්‍රමාණය', decimal: true),
+          TF(_value, t.fAmount, decimal: true),
           PickField(list: PL.cropUnit, value: _unit, onChanged: (v) => setState(() => _unit = v)),
           PickField(list: PL.season, value: _season, onChanged: (v) => setState(() => _season = v)),
           PickField(list: PL.cultivator, value: _cultivator, onChanged: (v) => setState(() => _cultivator = v)),
           PickField(list: PL.irrigation, value: _irrigation, onChanged: (v) => setState(() => _irrigation = v)),
-          TF(_note, 'සටහන', maxLines: 2),
+          TF(_note, t.note, maxLines: 2),
         ],
       ),
     );
@@ -350,7 +353,7 @@ class AnimalForm extends StatefulWidget {
   final List<Family> families;
   final Animal? animal;
 
-  /// Display name per family id (e.g. "සිරිසේන ගේ පවුල").
+  /// Display name per family (e.g. "සිරිසේන ගේ පවුල" / "Sirisena's family").
   final String Function(Family f)? familyLabel;
 
   @override
@@ -373,16 +376,16 @@ class _AnimalFormState extends State<AnimalForm> {
 
   Future<void> _save() async {
     if (_species == null) {
-      snack(context, 'සත්ව වර්ගය තෝරන්න');
+      snack(context, context.l10n.selectAnimal);
       return;
     }
     if (_male + _female + _young == 0) {
-      snack(context, 'ගණන ඇතුළත් කරන්න');
+      snack(context, context.l10n.enterCount);
       return;
     }
     final milk = dblOf(_milk);
     if (milk != null && _female > 0 && milk / _female > 40) {
-      if (!await confirm(context, 'එක් සතෙකුට දිනකට කිරි ලීටර් ${(milk / _female).toStringAsFixed(0)} ක් — නිවැරදිද?')) {
+      if (!await confirm(context, context.l10n.milkPerAnimalConfirm((milk / _female).toStringAsFixed(0)))) {
         return;
       }
     }
@@ -413,15 +416,16 @@ class _AnimalFormState extends State<AnimalForm> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.l10n;
     return Scaffold(
       appBar: BrandAppBar(
-        title: Text(a == null ? 'සතුන් එකතු කරන්න' : pl(PL.animal, a!.species)),
+        title: Text(a == null ? t.addAnimals : pl(PL.animal, a!.species)),
         actions: [
           if (a != null)
             IconButton(
               icon: const Icon(Icons.delete_outline),
               onPressed: () async {
-                if (await confirm(context, 'මෙම සටහන ඉවත් කරන්නද?', danger: true)) {
+                if (await confirm(context, t.recordDeleteConfirm, danger: true)) {
                   await db.softDelete(db.animals, a!.id, landId: widget.landId);
                   if (context.mounted) Navigator.pop(context);
                 }
@@ -435,23 +439,23 @@ class _AnimalFormState extends State<AnimalForm> {
         children: [
           PickField(list: PL.animal, value: _species, required: true, onChanged: (v) => setState(() => _species = v)),
           const SizedBox(height: 8),
-          CountStepper(label: 'පිරිමි', value: _male, onChanged: (v) => setState(() => _male = v)),
-          CountStepper(label: 'ගැහැණු', value: _female, onChanged: (v) => setState(() => _female = v)),
-          CountStepper(label: 'පැටවුන්', value: _young, onChanged: (v) => setState(() => _young = v)),
+          CountStepper(label: t.fMaleAnimals, value: _male, onChanged: (v) => setState(() => _male = v)),
+          CountStepper(label: t.fFemaleAnimals, value: _female, onChanged: (v) => setState(() => _female = v)),
+          CountStepper(label: t.fYoungAnimals, value: _young, onChanged: (v) => setState(() => _young = v)),
           const Divider(),
           PickField(list: PL.animalPurpose, value: _purpose, onChanged: (v) => setState(() => _purpose = v)),
-          if (_milkAnimals.contains(_species)) TF(_milk, 'දෛනික කිරි (ලීටර්)', decimal: true),
+          if (_milkAnimals.contains(_species)) TF(_milk, t.dailyMilkField, decimal: true),
           PickField(list: PL.animalHousing, value: _housing, onChanged: (v) => setState(() => _housing = v)),
           PickField(
               list: PL.yesNoUnknown,
-              label: _species == 'dog' ? 'ජලභීතිකා එන්නත් කර ඇත්ද' : 'එන්නත් කර ඇත්ද',
+              label: _species == 'dog' ? t.rabiesVaccinated : t.vaccinatedQuestion,
               value: _vaccinated,
               onChanged: (v) => setState(() => _vaccinated = v)),
           if (_vaccinated == 'yes')
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.vaccines),
-              title: Text(_lastVac == null ? 'අවසන් එන්නත් දිනය' : 'අවසන් එන්නත: ${dateFmt.format(_lastVac!)}'),
+              title: Text(_lastVac == null ? t.lastVaccinationDate : t.lastVaccinationOn(dateFmt.format(_lastVac!))),
               trailing: const Icon(Icons.edit_calendar),
               onTap: () async {
                 final d = await showDatePicker(
@@ -463,17 +467,17 @@ class _AnimalFormState extends State<AnimalForm> {
               },
             ),
           if (widget.families.isNotEmpty) ...[
-            const SectionTitle('අයිතිකරු පවුල'),
+            SectionTitle(t.ownerFamily),
             for (final f in widget.families)
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: Icon(_familyId == f.id ? Icons.radio_button_checked : Icons.radio_button_off,
                     color: Theme.of(context).colorScheme.primary),
-                title: Text(widget.familyLabel?.call(f) ?? 'පවුල'),
+                title: Text(widget.familyLabel?.call(f) ?? t.family),
                 onTap: () => setState(() => _familyId = f.id),
               ),
           ],
-          TF(_note, 'සටහන', maxLines: 2),
+          TF(_note, t.note, maxLines: 2),
         ],
       ),
     );

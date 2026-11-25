@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../theme.dart';
+import '../../l10n/l10n.dart';
 
 final dateFmt = DateFormat('yyyy-MM-dd');
 final dateTimeFmt = DateFormat('yyyy-MM-dd HH:mm');
@@ -9,20 +10,20 @@ void snack(BuildContext context, String msg) =>
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 
 Future<bool> confirm(BuildContext context, String message,
-    {String ok = 'ඔව්', String title = 'තහවුරු කරන්න', bool danger = false}) async {
+    {String? ok, String? title, bool danger = false}) async {
   final r = await showDialog<bool>(
     context: context,
     builder: (c) => AlertDialog(
-      title: Text(title),
+      title: Text(title ?? c.l10n.confirmTitle),
       content: Text(message),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('අවලංගු')),
+        TextButton(onPressed: () => Navigator.pop(c, false), child: Text(c.l10n.cancel)),
         FilledButton(
           style: danger
               ? FilledButton.styleFrom(backgroundColor: Theme.of(c).colorScheme.error)
               : null,
           onPressed: () => Navigator.pop(c, true),
-          child: Text(ok),
+          child: Text(ok ?? c.l10n.yes),
         ),
       ],
     ),
@@ -85,12 +86,6 @@ class EmptyHint extends StatelessWidget {
       );
 }
 
-const statusLabels = {
-  'draft': 'කෙටුම්පත',
-  'complete': 'සම්පූර්ණයි',
-  'verified': 'තහවුරු කළා',
-};
-
 Color statusColor(String status) => switch (status) {
       'verified' => Brand.ok,
       'complete' => Brand.info,
@@ -115,7 +110,7 @@ class StatusBadge extends StatelessWidget {
             Icon(status == 'verified' ? Icons.verified : Icons.circle,
                 size: 12, color: statusColor(status)),
             const SizedBox(width: 4),
-            Text(statusLabels[status] ?? status,
+            Text(context.l10n.landStatus(status),
                 style: TextStyle(fontSize: 13, color: statusColor(status), fontWeight: FontWeight.w700)),
           ],
         ),

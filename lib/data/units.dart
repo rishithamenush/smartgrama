@@ -4,6 +4,8 @@
 /// 1 hectare = 10,000 m² ≈ 395.369 perches.
 library;
 
+import '../l10n/l10n.dart';
+
 const double sqmPerPerch = 25.29285264;
 const double perchesPerHectare = 10000 / sqmPerPerch;
 
@@ -32,19 +34,22 @@ Arp perchesToArp(double total) {
 String _num(double v) =>
     v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
 
-/// Human readable Sinhala extent, e.g. "අක්. 1 රූ. 2 පර්. 10" or "පර්. 20".
+/// Human readable extent in the current language, e.g.
+/// "අක්. 1 රූ. 2 පර්. 10" / "A 1 R 2 P 10" / "ஏக்கர் 1 ரூட் 2 பேர்ச் 10",
+/// or "පර්. 20" / "P 20" / "பேர்ச் 20" under one acre.
 String formatExtent(double? perches) {
   if (perches == null) return '—';
-  if (perches < 160) return 'පර්. ${_num(perches)}';
+  final t = L10n.current;
+  if (perches < 160) return t.extentPerches(_num(perches));
   final a = perchesToArp(perches);
-  final parts = <String>['අක්. ${a.acres}'];
-  if (a.roods > 0) parts.add('රූ. ${a.roods}');
-  if (a.perches > 0) parts.add('පර්. ${_num(a.perches)}');
+  final parts = <String>[t.extentAcres('${a.acres}')];
+  if (a.roods > 0) parts.add(t.extentRoods('${a.roods}'));
+  if (a.perches > 0) parts.add(t.extentPerches(_num(a.perches)));
   return parts.join(' ');
 }
 
 String formatHectares(double? perches) =>
-    perches == null ? '—' : 'හෙක්. ${perchesToHectares(perches).toStringAsFixed(3)}';
+    perches == null ? '—' : L10n.current.extentHectares(perchesToHectares(perches).toStringAsFixed(3));
 
 /// Converts a crop extent in any unit to perches (null for plant counts).
 double? cropExtentToPerches(double value, String unit) => switch (unit) {

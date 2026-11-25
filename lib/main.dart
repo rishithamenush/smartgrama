@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'app_state.dart';
 import 'data/bundle.dart';
 import 'data/database.dart';
+import 'l10n/l10n.dart';
 import 'security/key_store.dart';
 import 'security/pin_screen.dart';
 import 'theme.dart';
 import 'ui/home/home_shell.dart';
+import 'ui/setup/language_screen.dart';
 import 'ui/setup/setup_screen.dart';
 
 void main() {
@@ -20,34 +21,39 @@ class SmartGramaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<double>(
-      valueListenable: AppState.fontScale,
-      builder: (context, scale, _) => MaterialApp(
-        title: 'SmartGrama',
-        debugShowCheckedModeBanner: false,
-        theme: buildTheme(),
-        locale: const Locale('si'),
-        supportedLocales: const [Locale('si'), Locale('en')],
-        localizationsDelegates: GlobalMaterialLocalizations.delegates,
-        // Tapping outside a field closes the keyboard (the iOS number pad
-        // has no "Done" key and would otherwise cover the save button).
-        builder: (context, child) => GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-          child: MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale * fontBoost)),
-            child: child!,
+    return ListenableBuilder(
+      listenable: Listenable.merge([AppState.fontScale, L10n.lang]),
+      builder: (context, _) {
+        final lang = L10n.lang.value;
+        return MaterialApp(
+          title: 'SmartGrama',
+          debugShowCheckedModeBanner: false,
+          theme: buildTheme(lang),
+          locale: lang.locale,
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          // Tapping outside a field closes the keyboard (the iOS number pad
+          // has no "Done" key and would otherwise cover the save button).
+          builder: (context, child) => GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                  textScaler: TextScaler.linear(AppState.fontScale.value * fontBoostFor(lang))),
+              child: child!,
+            ),
           ),
-        ),
-        home: const BootGate(),
-      ),
+          home: const BootGate(),
+        );
+      },
     );
   }
 }
 
-enum _Stage { loading, error, setPin, locked, setup, ready }
+enum _Stage { loading, error, language, setPin, locked, setup, ready }
 
-/// Start-up state machine: open DB → PIN setup / unlock → division setup →
+/// Start-up state machine: open DB → (first run) language → PIN setup /
+/// unlock → division setup →
 /// home. Re-locks after [AppState.autoLockMinutes] in the background.
 class BootGate extends StatefulWidget {
   const BootGate({super.key});
@@ -96,7 +102,13 @@ class _BootGateState extends State<BootGate> with WidgetsBindingObserver {
       await AppState.init();
       _division = await AppState.db.loadDivision();
       final hasPin = await KeyStore.hasPin();
-      setState(() => _stage = hasPin ? _Stage.locked : _Stage.setPin);
+      // Installs from before the language setting existed were Sinhala.
+      if (hasPin && !AppState.languageChosen) L10n.lang.value = AppLang.si;
+      setState(() => _stage = hasPin
+          ? _Stage.locked
+          : AppState.languageChosen
+              ? _Stage.setPin
+              : _Stage.language);
     } catch (e) {
       setState(() {
         _error = e;
@@ -118,11 +130,12 @@ class _BootGateState extends State<BootGate> with WidgetsBindingObserver {
           body: Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Text('දත්ත ගබඩාව විවෘත කළ නොහැක.\n\n$_error',
-                  textAlign: TextAlign.center),
+              child: Text(context.l10n.dbOpenError('$_error'), textAlign: TextAlign.center),
             ),
           ),
         );
+      case _Stage.language:
+        return LanguageScreen(onDone: () => setState(() => _stage = _Stage.setPin));
       case _Stage.setPin:
         return PinScreen.setup(onDone: _unlocked);
       case _Stage.locked:
